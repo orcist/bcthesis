@@ -90,7 +90,8 @@ public class UserController : MonoBehaviour {
 
 		initialPosition = transform.position;
 		initialRotation = transform.rotation;
-		mountCursor();
+		if (CursorObject)
+			mountCursor();
 	}
 
 	private void mountCursor() {
