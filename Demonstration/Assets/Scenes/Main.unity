@@ -339,7 +339,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
 --- !u!1001 &1229158313
 Prefab:
   m_ObjectHideFlags: 0
@@ -436,7 +436,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
 --- !u!1001 &2094897881
 Prefab:
   m_ObjectHideFlags: 0
@@ -475,6 +475,10 @@ Prefab:
     - target: {fileID: 406258, guid: b6755b67e825b4f2486140afa01adfec, type: 2}
       propertyPath: m_RootOrder
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 11441056, guid: b6755b67e825b4f2486140afa01adfec, type: 2}
+      propertyPath: DrawSkeleton
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: b6755b67e825b4f2486140afa01adfec, type: 2}

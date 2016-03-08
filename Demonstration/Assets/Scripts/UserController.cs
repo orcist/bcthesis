@@ -88,7 +88,7 @@ public class UserController : MonoBehaviour {
 				lines[joint].transform.parent = transform;
 			}
 
-		initialPosition = transform.position;
+		initialPosition = transform.position; // TODO do i need ths? {2}
 		initialRotation = transform.rotation;
 		if (CursorObject)
 			mountCursor();
@@ -114,7 +114,9 @@ public class UserController : MonoBehaviour {
 		if (userID <= 0) {
 			resetUser();
 			return;
-		}
+    }
+
+    updateUserPosition(manager, userID);
 		updateJoints(manager, userID);
 		if (DrawSkeleton && SkeletonLine)
 			drawSkeleton();
@@ -127,13 +129,22 @@ public class UserController : MonoBehaviour {
 		if (transform.rotation != initialRotation)
 			transform.rotation = initialRotation;
 
-		foreach (string joint in Joints.Keys) {
-			Joints[joint].gameObject.SetActive(true);
+    foreach (string joint in Joints.Keys) {
+			if (Joints[joint] == null) // TODO can this happen? {0}
+        continue;
+
+      Joints[joint].gameObject.SetActive(true);
 
 			Joints[joint].transform.localPosition = Vector3.zero;
-			Joints[joint].transform.localRotation = Quaternion.identity;
-		}
+      Joints[joint].transform.localRotation = Quaternion.identity;
+
+			lines[joint].gameObject.SetActive(false);
+    }
 	}
+
+  private void updateUserPosition(KinectManager manager, uint userID) {
+    transform.position = manager.GetUserPosition(userID);
+  }
 
 	private void updateJoints(KinectManager manager, uint userID) {
 		Vector3 userPosition = manager.GetUserPosition(userID), jointPosition;
@@ -141,7 +152,7 @@ public class UserController : MonoBehaviour {
 
 		// update the local positions of the joints
 		foreach (string joint in Joints.Keys) {
-			if (Joints[joint] == null) // TODO can this happen? {0}
+			if (Joints[joint] == null) // {0}
 				continue;
 
 			int jointIndex = Array.IndexOf(jointNames, joint);
