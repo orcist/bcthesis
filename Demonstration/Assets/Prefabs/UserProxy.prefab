@@ -760,6 +760,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DrawSkeleton: 0
+  CursorObject: {fileID: 100902, guid: b3689a2189eeafb4ba33ae7e64ece0b3, type: 2}
+  RightHanded: 1
   Hip_Center: {fileID: 119580}
   Spine: {fileID: 151810}
   Shoulder_Center: {fileID: 154608}
