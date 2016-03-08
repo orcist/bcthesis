@@ -342,7 +342,7 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 196250}
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -759,9 +759,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5557ef6fd00c44f35a7c99cce2f410cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DrawSkeleton: 0
-  CursorObject: {fileID: 100902, guid: b3689a2189eeafb4ba33ae7e64ece0b3, type: 2}
   RightHanded: 1
+  CursorObject: {fileID: 100902, guid: b3689a2189eeafb4ba33ae7e64ece0b3, type: 2}
+  JointAdjustmentSpeed: 1
   Hip_Center: {fileID: 119580}
   Spine: {fileID: 151810}
   Shoulder_Center: {fileID: 154608}
@@ -782,6 +782,7 @@ MonoBehaviour:
   Knee_Right: {fileID: 138762}
   Ankle_Right: {fileID: 119526}
   Foot_Right: {fileID: 164944}
+  DrawSkeleton: 0
   SkeletonLine: {fileID: 12000000, guid: 3a5878482d4c142b895a679f9f10a0a6, type: 2}
 --- !u!1001 &100100000
 Prefab:

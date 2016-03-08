@@ -3,15 +3,17 @@ using System;
 using System.Collections.Generic;
 
 public class UserController : MonoBehaviour {
-	public bool DrawSkeleton = false;
+  public bool RightHanded = true;
 	public GameObject CursorObject;
-	public bool RightHanded = true;
-	public GameObject Hip_Center, Spine, Shoulder_Center, Head,
-		Shoulder_Left, Elbow_Left, Wrist_Left, Hand_Left,
-		Shoulder_Right, Elbow_Right, Wrist_Right, Hand_Right,
-		Hip_Left, Knee_Left, Ankle_Left, Foot_Left,
-		Hip_Right, Knee_Right, Ankle_Right, Foot_Right;
-	public Dictionary<string, GameObject> Joints;
+
+  public float JointAdjustmentSpeed = 1.0f;
+  public GameObject Hip_Center, Spine, Shoulder_Center, Head,
+	Shoulder_Left, Elbow_Left, Wrist_Left, Hand_Left,
+	Shoulder_Right, Elbow_Right, Wrist_Right, Hand_Right,
+	Hip_Left, Knee_Left, Ankle_Left, Foot_Left,
+	Hip_Right, Knee_Right, Ankle_Right, Foot_Right;
+
+	public bool DrawSkeleton = false;
 	public LineRenderer SkeletonLine;
 
 	private string[] jointNames = new string[] {
@@ -21,10 +23,16 @@ public class UserController : MonoBehaviour {
 			"Hip_Left", "Knee_Left", "Ankle_Left", "Foot_Left",
 			"Hip_Right", "Knee_Right", "Ankle_Right", "Foot_Right"
 	};
-	private Dictionary<string, LineRenderer> lines;
+	private Dictionary<string, GameObject> Joints;
 	private Dictionary<string, string> jointParents;
+
+	private Dictionary<string, LineRenderer> lines;
+
 	private Vector3 initialPosition;
 	private Quaternion initialRotation;
+
+  private float minimumPositionDelta = 0.2f; // length of difference vector
+  private float minimumRotationDelta = 5f; // size of difference angle
 
 	void Start () {
 		Joints = new Dictionary<string, GameObject>() {
@@ -88,7 +96,7 @@ public class UserController : MonoBehaviour {
 				lines[joint].transform.parent = transform;
 			}
 
-		initialPosition = transform.position; // TODO do i need ths? {2}
+		initialPosition = transform.position; // TODO do i need ths? {0}
 		initialRotation = transform.rotation;
 		if (CursorObject)
 			mountCursor();
@@ -102,8 +110,9 @@ public class UserController : MonoBehaviour {
 		else
 			parentJoint = Hand_Left;
 
-		cursor.transform.parent = parentJoint.transform;
-		cursor.transform.rotation = parentJoint.transform.rotation;
+    cursor.transform.parent = parentJoint.transform;
+    cursor.transform.localPosition = Vector3.zero;
+    cursor.transform.rotation = parentJoint.transform.rotation;
 	}
 
 	// Update is called once per frame
@@ -123,17 +132,14 @@ public class UserController : MonoBehaviour {
 	}
 
 	private void resetUser() {
-		if (transform.position != initialPosition)
+		if (transform.position != initialPosition)  // {0}
 			transform.position = initialPosition;
 
-		if (transform.rotation != initialRotation)
+		if (transform.rotation != initialRotation)  // {0}
 			transform.rotation = initialRotation;
 
     foreach (string joint in Joints.Keys) {
-			if (Joints[joint] == null) // TODO can this happen? {0}
-        continue;
-
-      Joints[joint].gameObject.SetActive(true);
+      Joints[joint].gameObject.SetActive(false);
 
 			Joints[joint].transform.localPosition = Vector3.zero;
       Joints[joint].transform.localRotation = Quaternion.identity;
@@ -143,19 +149,21 @@ public class UserController : MonoBehaviour {
 	}
 
   private void updateUserPosition(KinectManager manager, uint userID) {
-    transform.position = manager.GetUserPosition(userID);
+    Vector3 userPosition = manager.GetUserPosition(userID);
+    if ((transform.position - userPosition).magnitude < minimumPositionDelta)
+      transform.position = manager.GetUserPosition(userID);
+    else
+      transform.position = Vector3.Lerp(transform.position, userPosition, Time.deltaTime * JointAdjustmentSpeed);
   }
 
 	private void updateJoints(KinectManager manager, uint userID) {
 		Vector3 userPosition = manager.GetUserPosition(userID), jointPosition;
 		Quaternion jointRotation;
 
-		// update the local positions of the joints
-		foreach (string joint in Joints.Keys) {
-			if (Joints[joint] == null) // {0}
-				continue;
-
-			int jointIndex = Array.IndexOf(jointNames, joint);
+    int jointIndex;
+    // update the local positions of the joints
+    foreach (string joint in Joints.Keys) {
+			jointIndex = Array.IndexOf(jointNames, joint);
 			if (manager.IsJointTracked(userID, jointIndex)) {
 				Joints[joint].gameObject.SetActive(true);
 
@@ -165,8 +173,23 @@ public class UserController : MonoBehaviour {
 				jointRotation = initialRotation * jointRotation;
 				jointPosition -= userPosition;
 
-				Joints[joint].transform.localPosition = jointPosition;
-				Joints[joint].transform.rotation = jointRotation;
+        if ((Joints[joint].transform.localPosition - jointPosition).magnitude < minimumPositionDelta) {
+          Joints[joint].transform.localPosition = jointPosition;
+        } else {
+  				Joints[joint].transform.localPosition = Vector3.Lerp(
+            Joints[joint].transform.localPosition,
+            jointPosition,
+            Time.deltaTime * JointAdjustmentSpeed);
+        }
+
+        if (Quaternion.Angle(Joints[joint].transform.rotation, jointRotation) < minimumRotationDelta) {
+          Joints[joint].transform.rotation = jointRotation;
+        } else {
+    			Joints[joint].transform.rotation = Quaternion.Slerp(
+            Joints[joint].transform.rotation,
+            jointRotation,
+            Time.deltaTime * JointAdjustmentSpeed);
+        }
 			} else {
 				Joints[joint].gameObject.SetActive(false);
 			}
@@ -177,8 +200,7 @@ public class UserController : MonoBehaviour {
 		string parentJoint;
 		foreach (string joint in Joints.Keys) {
 			parentJoint = jointParents[joint];
-			if (Joints[joint] == null || !Joints[joint].gameObject.activeSelf || // {0}
-					!Joints[parentJoint].gameObject.activeSelf) {
+			if (!Joints[joint].gameObject.activeSelf || !Joints[parentJoint].gameObject.activeSelf) {
 				lines[joint].gameObject.SetActive(false);
 				continue;
 			}
