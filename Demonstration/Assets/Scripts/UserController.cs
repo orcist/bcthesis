@@ -103,12 +103,8 @@ public class UserController : MonoBehaviour {
 	}
 
 	private void mountCursor() {
-		GameObject cursor = Instantiate(CursorObject), parentJoint;
-
-		if (RightHanded)
-			parentJoint = Hand_Right;
-		else
-			parentJoint = Hand_Left;
+		GameObject cursor = Instantiate(CursorObject),
+      parentJoint = getDominantHand();
 
     cursor.transform.parent = parentJoint.transform;
     cursor.transform.localPosition = Vector3.zero;
@@ -210,4 +206,25 @@ public class UserController : MonoBehaviour {
 			lines[joint].SetPosition(1, Joints[joint].transform.position);
 		}
 	}
+
+  private GameObject getDominantHand() {
+    return RightHanded ? Hand_Right : Hand_Left;
+  }
+
+  private GameObject getRecessiveHand() {
+    return RightHanded ? Hand_Left : Hand_Right;
+  }
+
+  private GameObject getRecessiveShoulder() {
+    return RightHanded ? Shoulder_Left : Shoulder_Right;
+  }
+
+  public float getRecessiveHandAngle() {
+    GameObject recessiveHand = getRecessiveHand();
+    if (!recessiveHand.gameObject.activeSelf)
+      return 0f;
+
+    Vector3 armVector = recessiveHand.transform.position - getRecessiveShoulder().transform.position;
+    return Vector3.Angle(-Vector3.up, armVector.normalized);
+  }
 }
