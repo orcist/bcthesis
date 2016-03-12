@@ -8,10 +8,10 @@ public class UserController : MonoBehaviour {
 
   public float JointAdjustmentSpeed = 1.0f;
   public GameObject Hip_Center, Spine, Shoulder_Center, Head,
-	Shoulder_Left, Elbow_Left, Wrist_Left, Hand_Left,
-	Shoulder_Right, Elbow_Right, Wrist_Right, Hand_Right,
-	Hip_Left, Knee_Left, Ankle_Left, Foot_Left,
-	Hip_Right, Knee_Right, Ankle_Right, Foot_Right;
+    Shoulder_Left, Elbow_Left, Wrist_Left, Hand_Left,
+    Shoulder_Right, Elbow_Right, Wrist_Right, Hand_Right,
+    Hip_Left, Knee_Left, Ankle_Left, Foot_Left,
+    Hip_Right, Knee_Right, Ankle_Right, Foot_Right;
 
 	public bool DrawSkeleton = false;
 	public LineRenderer SkeletonLine;
