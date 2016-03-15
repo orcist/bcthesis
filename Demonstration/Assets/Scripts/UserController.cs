@@ -6,6 +6,8 @@ public class UserController : MonoBehaviour {
   public bool RightHanded = true;
 	public GameObject CursorObject;
 
+  public bool Calibrated = false;
+
   public float JointAdjustmentSpeed = 1.0f;
   public GameObject Hip_Center, Spine, Shoulder_Center, Head,
     Shoulder_Left, Elbow_Left, Wrist_Left, Hand_Left,
@@ -25,6 +27,14 @@ public class UserController : MonoBehaviour {
 	};
 	private Dictionary<string, GameObject> Joints;
 	private Dictionary<string, string> jointParents;
+  private bool allJointsVisible = false;
+
+  private Vector2[] boundingTrapezoid = new Vector2[4];
+  /* (-+),(++)
+   * (--),(+-)
+   * in this order
+   */
+  private GameObject[] boundingWalls = new GameObject[4];
 
 	private Dictionary<string, LineRenderer> lines;
 
@@ -125,6 +135,9 @@ public class UserController : MonoBehaviour {
 		updateJoints(manager, userID);
 		if (DrawSkeleton && SkeletonLine)
 			drawSkeleton();
+
+    if (!Calibrated)
+      calibrateSpace(manager, userID);
 	}
 
 	private void resetUser() {
@@ -142,17 +155,20 @@ public class UserController : MonoBehaviour {
 
 			lines[joint].gameObject.SetActive(false);
     }
+    allJointsVisible = false;
 	}
 
   private void updateUserPosition(KinectManager manager, uint userID) {
     Vector3 userPosition = manager.GetUserPosition(userID);
     if ((transform.position - userPosition).magnitude < minimumPositionDelta)
-      transform.position = manager.GetUserPosition(userID);
+      transform.position = userPosition;
     else
       transform.position = Vector3.Lerp(transform.position, userPosition, Time.deltaTime * JointAdjustmentSpeed);
   }
 
 	private void updateJoints(KinectManager manager, uint userID) {
+    allJointsVisible = true;
+
 		Vector3 userPosition = manager.GetUserPosition(userID), jointPosition;
 		Quaternion jointRotation;
 
@@ -166,8 +182,8 @@ public class UserController : MonoBehaviour {
 				jointPosition = manager.GetJointPosition(userID, jointIndex);
 				jointRotation = manager.GetJointOrientation(userID, jointIndex, true);
 
-				jointRotation = initialRotation * jointRotation;
 				jointPosition -= userPosition;
+				jointRotation = initialRotation * jointRotation;
 
         if ((Joints[joint].transform.localPosition - jointPosition).magnitude < minimumPositionDelta) {
           Joints[joint].transform.localPosition = jointPosition;
@@ -188,6 +204,7 @@ public class UserController : MonoBehaviour {
         }
 			} else {
 				Joints[joint].gameObject.SetActive(false);
+        allJointsVisible = false;
 			}
 		}
 	}
@@ -206,6 +223,38 @@ public class UserController : MonoBehaviour {
 			lines[joint].SetPosition(1, Joints[joint].transform.position);
 		}
 	}
+
+  private void calibrateSpace(KinectManager manager, uint userID) {
+    if (!allJointsVisible)
+      return;
+
+    Vector2 currentPosition = manager.GetUserPosition(userID);
+    Func<Vector2, Vector2>[] trapezoidFunctions = new Func<Vector2, Vector2>[] {
+      (Vector2 scanned) => {
+        return new Vector2(
+          Mathf.Min(scanned.x, currentPosition.x),
+          Mathf.Max(scanned.y, currentPosition.y)
+        );}, // (-+)
+      (Vector2 scanned) => {
+        return new Vector2(
+          Mathf.Max(scanned.x, currentPosition.x),
+          Mathf.Max(scanned.y, currentPosition.y)
+        );}, // (++)
+      (Vector2 scanned) => {
+        return new Vector2(
+          Mathf.Min(scanned.x, currentPosition.x),
+          Mathf.Min(scanned.y, currentPosition.y)
+        );}, // (--)
+      (Vector2 scanned) => {
+        return new Vector2(
+          Mathf.Max(scanned.x, currentPosition.x),
+          Mathf.Min(scanned.y, currentPosition.y)
+        );} // (+-)
+    };
+
+    for (uint i = 0; i < 4; i++)
+      boundingTrapezoid[i] = trapezoidFunctions[i].Invoke(boundingTrapezoid[i]);
+  }
 
   private GameObject getDominantHand() {
     return RightHanded ? Hand_Right : Hand_Left;
