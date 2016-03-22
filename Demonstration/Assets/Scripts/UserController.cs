@@ -208,11 +208,11 @@ public class UserController : MonoBehaviour {
 	}
 
   private GameObject getDominantHand() {
-    return RightHanded ? Hand_Right : Hand_Left;
+    return RightHanded ? Joints["Hand_Right"] : Joints["Hand_Left"];
   }
 
   private GameObject getRecessiveHand() {
-    return RightHanded ? Hand_Left : Hand_Right;
+    return RightHanded ? Joints["Hand_Left"] : Joints["Hand_Right"];
   }
 
   private GameObject getRecessiveShoulder() {
