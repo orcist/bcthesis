@@ -7,6 +7,7 @@ public class UserController : MonoBehaviour {
 	public GameObject CursorObject;
 
   public bool Calibrated = false;
+  public GameObject BoundaryObject;
 
   public float JointAdjustmentSpeed = 1.0f;
   public GameObject Hip_Center, Spine, Shoulder_Center, Head,
@@ -18,7 +19,7 @@ public class UserController : MonoBehaviour {
 	public bool DrawSkeleton = false;
 	public LineRenderer SkeletonLine;
 
-	private string[] jointNames = new string[] {
+	private string[] jointNames = {
 			"Hip_Center", "Spine", "Shoulder_Center", "Head",
 			"Shoulder_Left", "Elbow_Left", "Wrist_Left", "Hand_Left",
 			"Shoulder_Right", "Elbow_Right", "Wrist_Right", "Hand_Right",
@@ -29,20 +30,46 @@ public class UserController : MonoBehaviour {
 	private Dictionary<string, string> jointParents;
   private bool allJointsVisible = false;
 
-  private Vector2[] boundingTrapezoid = new Vector2[4];
+  private Vector3[] bindingTrapezoid;
   /* (-+),(++)
    * (--),(+-)
    * in this order
    */
-  private GameObject[] boundingWalls = new GameObject[4];
+  private Func<Vector3, Vector3, Vector3>[] trapezoidFunctions = new Func<Vector3, Vector3, Vector3>[] {
+    (Vector3 currentPosition, Vector3 scanned) => {
+      return new Vector3(
+        Mathf.Min(scanned.x, currentPosition.x),
+        0f,
+        Mathf.Max(scanned.z, currentPosition.z)
+    );}, // (-+)
+    (Vector3 currentPosition, Vector3 scanned) => {
+      return new Vector3(
+        Mathf.Max(scanned.x, currentPosition.x),
+        0f,
+        Mathf.Max(scanned.z, currentPosition.z)
+    );}, // (++)
+    (Vector3 currentPosition, Vector3 scanned) => {
+      return new Vector3(
+        Mathf.Min(scanned.x, currentPosition.x),
+        0f,
+        Mathf.Min(scanned.z, currentPosition.z)
+    );}, // (--)
+    (Vector3 currentPosition, Vector3 scanned) => {
+      return new Vector3(
+        Mathf.Max(scanned.x, currentPosition.x),
+        0f,
+        Mathf.Min(scanned.z, currentPosition.z)
+    );} // (+-)
+  };
+  private GameObject[] bindingObjects;
 
 	private Dictionary<string, LineRenderer> lines;
 
 	private Vector3 initialPosition;
 	private Quaternion initialRotation;
 
-  private float minimumPositionDelta = 0.2f; // length of difference vector
-  private float minimumRotationDelta = 5f; // size of difference angle
+  private float minimumPositionDelta = 0.2f; // epsilon for joint and user position interpolation (in unity units ~ meters)
+  private float minimumRotationDelta = 5f; // epsilon for joint and user rotation interpolation (in degrees)
 
 	void Start () {
 		Joints = new Dictionary<string, GameObject>() {
@@ -113,7 +140,7 @@ public class UserController : MonoBehaviour {
 	}
 
 	private void mountCursor() {
-		GameObject cursor = Instantiate(CursorObject),
+		GameObject cursor = Instantiate(CursorObject) as GameObject,
       parentJoint = getDominantHand();
 
     cursor.transform.parent = parentJoint.transform;
@@ -125,6 +152,9 @@ public class UserController : MonoBehaviour {
 	void Update () {
 		KinectManager manager = KinectManager.Instance;
 		uint userID = (manager != null) ? manager.GetPlayer1ID() : 0;
+
+    if (Calibrated && bindingObjects == null)
+      buildBoundaries();
 
 		if (userID <= 0) {
 			resetUser();
@@ -169,7 +199,7 @@ public class UserController : MonoBehaviour {
 	private void updateJoints(KinectManager manager, uint userID) {
     allJointsVisible = true;
 
-		Vector3 userPosition = manager.GetUserPosition(userID), jointPosition;
+		Vector3 userPosition = transform.position, jointPosition;
 		Quaternion jointRotation;
 
     int jointIndex;
@@ -228,32 +258,39 @@ public class UserController : MonoBehaviour {
     if (!allJointsVisible)
       return;
 
-    Vector2 currentPosition = manager.GetUserPosition(userID);
-    Func<Vector2, Vector2>[] trapezoidFunctions = new Func<Vector2, Vector2>[] {
-      (Vector2 scanned) => {
-        return new Vector2(
-          Mathf.Min(scanned.x, currentPosition.x),
-          Mathf.Max(scanned.y, currentPosition.y)
-        );}, // (-+)
-      (Vector2 scanned) => {
-        return new Vector2(
-          Mathf.Max(scanned.x, currentPosition.x),
-          Mathf.Max(scanned.y, currentPosition.y)
-        );}, // (++)
-      (Vector2 scanned) => {
-        return new Vector2(
-          Mathf.Min(scanned.x, currentPosition.x),
-          Mathf.Min(scanned.y, currentPosition.y)
-        );}, // (--)
-      (Vector2 scanned) => {
-        return new Vector2(
-          Mathf.Max(scanned.x, currentPosition.x),
-          Mathf.Min(scanned.y, currentPosition.y)
-        );} // (+-)
-    };
+    Vector3 userPosition = transform.position;
 
-    for (uint i = 0; i < 4; i++)
-      boundingTrapezoid[i] = trapezoidFunctions[i].Invoke(boundingTrapezoid[i]);
+    if (bindingTrapezoid == null) { // first scan of user
+      bindingTrapezoid = new Vector3[4];
+      for (uint i = 0; i < 4; i++) {
+        bindingTrapezoid[i] = userPosition;
+        bindingTrapezoid[i].y = 0f;
+      }
+      return;
+    }
+
+    int j = (userPosition.x < 0f ? 0 : 1) + (userPosition.z < 0f ? 2 : 0);
+    bindingTrapezoid[j] = trapezoidFunctions[j](bindingTrapezoid[j], userPosition);
+  }
+
+  private void buildBoundaries() {
+    bindingObjects = new GameObject[4];
+    int[] trapezoidPaths = {0, 1, 3, 2, 0};
+
+    Vector3 fromPoint, toPoint, boundaryVector;
+    Transform boundary;
+    for (uint i = 0; i < 4; i++) {
+      fromPoint = bindingTrapezoid[trapezoidPaths[i]];
+      toPoint = bindingTrapezoid[trapezoidPaths[i+1]];
+      boundaryVector = toPoint-fromPoint;
+
+      bindingObjects[i] = Instantiate(BoundaryObject) as GameObject;
+      boundary = bindingObjects[i].transform;
+
+      boundary.localScale = new Vector3(boundary.localScale.x, boundary.localScale.y, boundaryVector.magnitude);
+      boundary.position += fromPoint + boundaryVector/2;
+      boundary.LookAt(toPoint + new Vector3(0f, boundary.localScale.y, 0f));
+    }
   }
 
   private GameObject getDominantHand() {

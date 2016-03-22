@@ -761,6 +761,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RightHanded: 1
   CursorObject: {fileID: 100902, guid: b3689a2189eeafb4ba33ae7e64ece0b3, type: 2}
+  Calibrated: 0
+  BoundaryObject: {fileID: 110008, guid: 9d94b07a0dc366642a6586a22c09df72, type: 2}
   JointAdjustmentSpeed: 1
   Hip_Center: {fileID: 119580}
   Spine: {fileID: 151810}
