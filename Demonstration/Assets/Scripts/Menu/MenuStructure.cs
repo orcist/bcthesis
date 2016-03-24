@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 
 // Define symbols for code readability
-
 class NODE_TYPE {
   public static readonly uint BUTTON = 10001;
   public static readonly uint LABEL = 10002;
@@ -21,7 +20,7 @@ class NODE_TYPE {
 class OPTION {
   public static readonly uint UP = 20001;
   public static readonly uint MIDDLE = 20002;
-  public static readonly uint BOTTOM = 20002;
+  public static readonly uint DOWN = 20003;
 }
 
 public class MenuNode {
@@ -35,11 +34,11 @@ public class MenuNode {
     Trigger = trigger;
     ChildNodes = childNodes;
   }
-  public Action Trigger;
+  public readonly Action Trigger;
   public override string ToString() {
     return String.Format(
       "MenuNode(NodeLabel: \"{0}\", NodeType: {1}, Child count: {2})",
-      NodeLabel, NODE_TYPE.Translate(NodeType), ChildNodes.Keys.Count
+      NodeLabel, NODE_TYPE.Translate(NodeType), (ChildNodes == null ? 0 : ChildNodes.Keys.Count)
     );
   }
 }
@@ -53,26 +52,54 @@ public class MenuStructure : MonoBehaviour {
 
   void Awake() {
     callbacks = new Dictionary<string, Action>() {
-      {"start", () => { Debug.Log("Reset menu."); }},
-      {"first", () => { Debug.Log("Activate first callback."); }}
+      {"start", () => { Debug.Log("Start."); }},
+      {"reset", () => { Reset(); }},
+      {"n/a", () => { Debug.Log("This functionality is not yet implemented."); }},
     };
 
     StartNode = new MenuNode(
-      "Start node", NODE_TYPE.LABEL, callbacks["start"], new Dictionary<uint, MenuNode>() {
-        { OPTION.UP, new MenuNode("First choice", NODE_TYPE.BUTTON, callbacks["first"], new Dictionary<uint, MenuNode>()) }
+      "Start", NODE_TYPE.LABEL, callbacks["start"], new Dictionary<uint, MenuNode>() {
+        {OPTION.DOWN, new MenuNode("Additional actions.", NODE_TYPE.LABEL, null, new Dictionary<uint, MenuNode>() {
+          {OPTION.UP, new MenuNode("Touch any button for more information.", NODE_TYPE.LABEL, null, new Dictionary<uint, MenuNode>())},
+          {OPTION.MIDDLE, new MenuNode("Step back to continue working.", NODE_TYPE.LABEL, null, new Dictionary<uint, MenuNode>())},
+        })},
+        {OPTION.UP, new MenuNode("Character animation", NODE_TYPE.LABEL, null, new Dictionary<uint, MenuNode>() {
+          {OPTION.UP, new MenuNode("Touch the joint you wish to manipulate.", NODE_TYPE.LABEL, null, null)},
+          {OPTION.MIDDLE, new MenuNode("Manipulate selected joint.", NODE_TYPE.BUTTON, callbacks["n/a"], new Dictionary<uint, MenuNode>() {
+            {OPTION.MIDDLE, new MenuNode("Which do you wish to manipulate?", NODE_TYPE.LABEL, null, null)},
+            {OPTION.UP, new MenuNode("Joint position.", NODE_TYPE.BUTTON, callbacks["n/a"], new Dictionary<uint, MenuNode>() {
+              {OPTION.UP, new MenuNode("Adjust position to your liking.", NODE_TYPE.LABEL, null, null)},
+              {OPTION.DOWN, new MenuNode("Discard changes.", NODE_TYPE.BUTTON, callbacks["n/a"], null)},
+              {OPTION.MIDDLE, new MenuNode("Save changes.", NODE_TYPE.BUTTON, callbacks["n/a"], new Dictionary<uint, MenuNode>() {
+                {OPTION.DOWN, new MenuNode("Continue working.", NODE_TYPE.BUTTON, callbacks["reset"], null)}
+              })}
+            })},
+            {OPTION.DOWN, new MenuNode("Joint rotation.", NODE_TYPE.BUTTON, callbacks["n/a"], new Dictionary<uint, MenuNode>() {
+              {OPTION.DOWN, new MenuNode("Adjust rotation to your liking.", NODE_TYPE.LABEL, null, null)},
+              {OPTION.UP, new MenuNode("Discard changes.", NODE_TYPE.BUTTON, callbacks["n/a"], new Dictionary<uint, MenuNode>() {
+                {OPTION.DOWN, new MenuNode("Continue working.", NODE_TYPE.BUTTON, callbacks["reset"], null)}
+              })},
+              {OPTION.MIDDLE, new MenuNode("Save changes.", NODE_TYPE.BUTTON, callbacks["n/a"], new Dictionary<uint, MenuNode>() {
+                {OPTION.DOWN, new MenuNode("Continue working.", NODE_TYPE.BUTTON, callbacks["reset"], null)}
+              })}
+            })}
+          })}
+        })}
       }
     );
 
     Reset();
-    ActivateOption(OPTION.UP);
   }
 
   public void ActivateOption(uint option) {
+    if (CurrentNode.ChildNodes == null || !CurrentNode.ChildNodes.ContainsKey(option))
+      Debug.LogError("This option isn't available in this context."); // TODO remove this ?? {1}
+
     CurrentNode = CurrentNode.ChildNodes[option];
 
     if (DebugMode) Debug.Log("Entered node: " + CurrentNode);
 
-    CurrentNode.Trigger();
+    if (CurrentNode.Trigger != null) CurrentNode.Trigger();
     rebuildMenu();
   }
   public void Reset() {
