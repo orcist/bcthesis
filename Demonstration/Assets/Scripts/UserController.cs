@@ -305,7 +305,7 @@ public class UserController : MonoBehaviour {
     return RightHanded ? Shoulder_Left : Shoulder_Right;
   }
 
-  public float GetRecessiveHandAngle() {
+  public float getRecessiveHandAngle() {
     GameObject recessiveHand = getRecessiveHand();
     if (!recessiveHand.gameObject.activeSelf)
       return 0f;
