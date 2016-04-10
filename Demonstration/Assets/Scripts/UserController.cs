@@ -96,8 +96,6 @@ public class UserController : MonoBehaviour {
 				lines[joint].transform.parent = transform;
 			}
 
-		initialPosition = transform.position; // TODO do i need ths? {0}
-		initialRotation = transform.rotation;
 		if (CursorObject)
 			mountCursor();
 	}
@@ -128,11 +126,8 @@ public class UserController : MonoBehaviour {
 	}
 
 	private void resetUser() {
-		if (transform.position != initialPosition)  // {0}
-			transform.position = initialPosition;
-
-		if (transform.rotation != initialRotation)  // {0}
-			transform.rotation = initialRotation;
+    transform.position = initialPosition;
+    transform.rotation = initialRotation;
 
     foreach (string joint in Joints.Keys) {
       Joints[joint].gameObject.SetActive(false);
@@ -153,43 +148,49 @@ public class UserController : MonoBehaviour {
   }
 
 	private void updateJoints(KinectManager manager, uint userID) {
-		Vector3 userPosition = manager.GetUserPosition(userID), jointPosition;
+		Vector3 userPosition = transform.position, jointPosition;
 		Quaternion jointRotation;
 
     int jointIndex;
     // update the local positions of the joints
     foreach (string joint in Joints.Keys) {
 			jointIndex = Array.IndexOf(jointNames, joint);
-			if (manager.IsJointTracked(userID, jointIndex)) {
-				Joints[joint].gameObject.SetActive(true);
 
-				jointPosition = manager.GetJointPosition(userID, jointIndex);
-				jointRotation = manager.GetJointOrientation(userID, jointIndex, true);
+			if (!manager.IsJointTracked(userID, jointIndex)) {
+        Joints[joint].gameObject.SetActive(false);
+        continue;
+      }
 
-				jointRotation = initialRotation * jointRotation;
-				jointPosition -= userPosition;
+      jointPosition = manager.GetJointPosition(userID, jointIndex);
+      jointRotation = manager.GetJointOrientation(userID, jointIndex, true);
 
-        if ((Joints[joint].transform.localPosition - jointPosition).magnitude < minimumPositionDelta) {
+      jointPosition -= userPosition;
+      jointRotation = initialRotation * jointRotation;
+
+      if (!Joints[joint].gameObject.activeSelf) {
+        Joints[joint].transform.localPosition = jointPosition;
+        Joints[joint].transform.rotation = jointRotation;
+      } else {
+        if ((Joints[joint].transform.localPosition - jointPosition).magnitude < minimumPositionDelta)
           Joints[joint].transform.localPosition = jointPosition;
-        } else {
-  				Joints[joint].transform.localPosition = Vector3.Lerp(
+        else {
+          Joints[joint].transform.localPosition = Vector3.Lerp(
             Joints[joint].transform.localPosition,
             jointPosition,
             Time.deltaTime * JointAdjustmentSpeed);
         }
 
-        if (Quaternion.Angle(Joints[joint].transform.rotation, jointRotation) < minimumRotationDelta) {
+        if (Quaternion.Angle(Joints[joint].transform.rotation, jointRotation) < minimumRotationDelta)
           Joints[joint].transform.rotation = jointRotation;
-        } else {
-    			Joints[joint].transform.rotation = Quaternion.Slerp(
-            Joints[joint].transform.rotation,
-            jointRotation,
-            Time.deltaTime * JointAdjustmentSpeed);
+        else {
+          Joints[joint].transform.rotation = Quaternion.Slerp(
+          Joints[joint].transform.rotation,
+          jointRotation,
+          Time.deltaTime * JointAdjustmentSpeed);
         }
-			} else {
-				Joints[joint].gameObject.SetActive(false);
-			}
-		}
+      }
+      Joints[joint].gameObject.SetActive(true);
+    }
 	}
 
 	private void drawSkeleton() {
@@ -208,11 +209,11 @@ public class UserController : MonoBehaviour {
 	}
 
   private GameObject getDominantHand() {
-    return RightHanded ? Joints["Hand_Right"] : Joints["Hand_Left"];
+    return RightHanded ? Hand_Right : Hand_Left;
   }
 
   private GameObject getRecessiveHand() {
-    return RightHanded ? Joints["Hand_Left"] : Joints["Hand_Right"];
+    return RightHanded ? Hand_Left : Hand_Right;
   }
 
   private GameObject getRecessiveShoulder() {
