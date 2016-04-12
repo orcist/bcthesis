@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 // Define symbols for code readability
-class OPTION {
+public class OPTION {
   public static readonly uint UP = 20001;
   public static readonly uint MIDDLE = 20002;
   public static readonly uint DOWN = 20003;
@@ -22,7 +22,7 @@ public class MenuNode {
   public override string ToString() {
     return String.Format(
       "MenuNode(NodeLabel: \"{0}\", NodeType: {1}, Child count: {2})",
-      NodeLabel,
+      NodeLabel.Substring(0, Math.Min(NodeLabel.Length, 25)),
       (Trigger == null) ? "NODE.LABEL" : "NODE.BUTTON",
       (ChildNodes == null ? 0 : ChildNodes.Keys.Count)
     );
@@ -44,31 +44,23 @@ public class MenuStructure : MonoBehaviour {
 
     startNode = new MenuNode(
       "Start", null, new Dictionary<uint, MenuNode>() {
-        {OPTION.DOWN, new MenuNode("Additional actions.", null, new Dictionary<uint, MenuNode>() {
-          {OPTION.UP, new MenuNode("Touch any button for more information.", null, new Dictionary<uint, MenuNode>())},
-          {OPTION.MIDDLE, new MenuNode("Step back to continue working.", null, new Dictionary<uint, MenuNode>())},
+        {OPTION.UP, new MenuNode("Additional actions.", null, new Dictionary<uint, MenuNode>() {
+          {OPTION.UP, new MenuNode("Undo the last change. There won't be any additional confirmation.", callbacks["n/a"], null)},
+          {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", null, new Dictionary<uint, MenuNode>())},
+          {OPTION.DOWN, new MenuNode("Touch the characters joint to start animating.", null, new Dictionary<uint, MenuNode>())},
         })},
-        {OPTION.UP, new MenuNode("Character animation", null, new Dictionary<uint, MenuNode>() {
-          {OPTION.UP, new MenuNode("Touch the joint you wish to manipulate.", null, null)},
-          {OPTION.MIDDLE, new MenuNode("Manipulate selected joint.", callbacks["n/a"], new Dictionary<uint, MenuNode>() {
-            {OPTION.MIDDLE, new MenuNode("Which do you wish to manipulate?", null, null)},
-            {OPTION.UP, new MenuNode("Joint position.", callbacks["n/a"], new Dictionary<uint, MenuNode>() {
-              {OPTION.UP, new MenuNode("Adjust position to your liking.", null, null)},
-              {OPTION.DOWN, new MenuNode("Discard changes.", callbacks["n/a"], null)},
-              {OPTION.MIDDLE, new MenuNode("Save changes.", callbacks["n/a"], new Dictionary<uint, MenuNode>() {
-                {OPTION.DOWN, new MenuNode("Continue working.", callbacks["reset"], null)}
-              })}
+        {OPTION.DOWN, new MenuNode("Character animation.", null, new Dictionary<uint, MenuNode>() {
+          {OPTION.UP, new MenuNode("Do you want to work with this joint?.", null, null)},
+          {OPTION.MIDDLE, new MenuNode("Rotate selected joint.", callbacks["n/a"], new Dictionary<uint, MenuNode>() {
+            {OPTION.UP, new MenuNode("Discard changes.", null, new Dictionary<uint, MenuNode>() {
+              {OPTION.UP, new MenuNode("Are you sure about that?", null, null)},
+              {OPTION.MIDDLE, new MenuNode("Yes, discard the changes.", callbacks["reset"], null)},
+              {OPTION.DOWN, new MenuNode("I changed my mind, save the changes.", callbacks["n/a"], null)}
             })},
-            {OPTION.DOWN, new MenuNode("Joint rotation.", callbacks["n/a"], new Dictionary<uint, MenuNode>() {
-              {OPTION.DOWN, new MenuNode("Adjust rotation to your liking.", null, null)},
-              {OPTION.UP, new MenuNode("Discard changes.", callbacks["n/a"], new Dictionary<uint, MenuNode>() {
-                {OPTION.DOWN, new MenuNode("Continue working.", callbacks["reset"], null)}
-              })},
-              {OPTION.MIDDLE, new MenuNode("Save changes.", callbacks["n/a"], new Dictionary<uint, MenuNode>() {
-                {OPTION.DOWN, new MenuNode("Continue working.", callbacks["reset"], null)}
-              })}
-            })}
-          })}
+            {OPTION.MIDDLE, new MenuNode("Adjust joint rotation to your liking.", null, null)},
+            {OPTION.DOWN, new MenuNode("Save changes.", callbacks["n/a"], null)}
+          })},
+          {OPTION.DOWN, new MenuNode("To access additional actions menu break contact with model.", null, null)}
         })}
       }
     );
@@ -76,22 +68,26 @@ public class MenuStructure : MonoBehaviour {
     Reset();
   }
 
-  public void ActivateOption(uint option) {
+  public Dictionary<uint, MenuNode> ActivateOption(uint option) {
     if (CurrentNode.ChildNodes == null || !CurrentNode.ChildNodes.ContainsKey(option))
       Debug.LogError("This option isn't available in this context.");
 
     CurrentNode = CurrentNode.ChildNodes[option];
 
-    if (DebugMode)
-      Debug.Log("Entered node: " + CurrentNode);
+    if (DebugMode) Debug.Log("Entered node: " + CurrentNode);
 
     if (CurrentNode.Trigger != null)
       CurrentNode.Trigger();
+    else if (CurrentNode.ChildNodes == null && DebugMode)
+      Debug.LogWarning("Activated node without trigger or child nodes: " + CurrentNode);
+
     rebuildMenu();
+
+    return CurrentNode.ChildNodes;
   }
   public void Reset() {
     CurrentNode = startNode;
-    Debug.Log("Menu reset, now at startNode.");
+    if (DebugMode) Debug.Log("Menu reset, now at startNode.");
   }
 
   private void rebuildMenu() { // TODO manipulate GameObjects and sprites to show new menu {0}
