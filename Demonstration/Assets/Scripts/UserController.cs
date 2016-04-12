@@ -6,6 +6,9 @@ public class UserController : MonoBehaviour {
   public bool RightHanded = true;
 	public GameObject CursorObject;
 
+  public bool Calibrated = false;
+  public GameObject BoundaryObject;
+
   public float JointAdjustmentSpeed = 1.0f;
   public GameObject Hip_Center, Spine, Shoulder_Center, Head,
     Shoulder_Left, Elbow_Left, Wrist_Left, Hand_Left,
@@ -16,7 +19,7 @@ public class UserController : MonoBehaviour {
 	public bool DrawSkeleton = false;
 	public LineRenderer SkeletonLine;
 
-	private string[] jointNames = new string[] {
+	private string[] jointNames = {
 			"Hip_Center", "Spine", "Shoulder_Center", "Head",
 			"Shoulder_Left", "Elbow_Left", "Wrist_Left", "Hand_Left",
 			"Shoulder_Right", "Elbow_Right", "Wrist_Right", "Hand_Right",
@@ -25,14 +28,48 @@ public class UserController : MonoBehaviour {
 	};
 	private Dictionary<string, GameObject> Joints;
 	private Dictionary<string, string> jointParents;
+  private bool allJointsVisible = false;
+
+  private Vector3[] bindingTrapezoid;
+  /* (-+),(++)
+   * (--),(+-)
+   * in this order
+   */
+  private Func<Vector3, Vector3, Vector3>[] trapezoidFunctions = new Func<Vector3, Vector3, Vector3>[] {
+    (Vector3 currentPosition, Vector3 scanned) => {
+      return new Vector3(
+        Mathf.Min(scanned.x, currentPosition.x),
+        0f,
+        Mathf.Max(scanned.z, currentPosition.z)
+    );}, // (-+)
+    (Vector3 currentPosition, Vector3 scanned) => {
+      return new Vector3(
+        Mathf.Max(scanned.x, currentPosition.x),
+        0f,
+        Mathf.Max(scanned.z, currentPosition.z)
+    );}, // (++)
+    (Vector3 currentPosition, Vector3 scanned) => {
+      return new Vector3(
+        Mathf.Min(scanned.x, currentPosition.x),
+        0f,
+        Mathf.Min(scanned.z, currentPosition.z)
+    );}, // (--)
+    (Vector3 currentPosition, Vector3 scanned) => {
+      return new Vector3(
+        Mathf.Max(scanned.x, currentPosition.x),
+        0f,
+        Mathf.Min(scanned.z, currentPosition.z)
+    );} // (+-)
+  };
+  private GameObject[] bindingObjects;
 
 	private Dictionary<string, LineRenderer> lines;
 
 	private Vector3 initialPosition;
 	private Quaternion initialRotation;
 
-  private float minimumPositionDelta = 0.2f; // length of difference vector
-  private float minimumRotationDelta = 5f; // size of difference angle
+  private float minimumPositionDelta = 0.2f; // epsilon for joint and user position interpolation (in unity units ~ meters)
+  private float minimumRotationDelta = 5f; // epsilon for joint and user rotation interpolation (in degrees)
 
 	void Start () {
 		Joints = new Dictionary<string, GameObject>() {
@@ -101,7 +138,7 @@ public class UserController : MonoBehaviour {
 	}
 
 	private void mountCursor() {
-		GameObject cursor = Instantiate(CursorObject),
+		GameObject cursor = Instantiate(CursorObject) as GameObject,
       parentJoint = getDominantHand();
 
     cursor.transform.parent = parentJoint.transform;
@@ -114,6 +151,9 @@ public class UserController : MonoBehaviour {
 		KinectManager manager = KinectManager.Instance;
 		uint userID = (manager != null) ? manager.GetPlayer1ID() : 0;
 
+    if (Calibrated && bindingObjects == null)
+      buildBoundaries();
+
 		if (userID <= 0) {
 			resetUser();
 			return;
@@ -121,6 +161,10 @@ public class UserController : MonoBehaviour {
 
     updateUserPosition(manager, userID);
 		updateJoints(manager, userID);
+
+    if (!Calibrated)
+      calibrateSpace();
+
 		if (DrawSkeleton && SkeletonLine)
 			drawSkeleton();
 	}
@@ -137,26 +181,29 @@ public class UserController : MonoBehaviour {
 
 			lines[joint].gameObject.SetActive(false);
     }
+    allJointsVisible = false;
 	}
 
   private void updateUserPosition(KinectManager manager, uint userID) {
     Vector3 userPosition = manager.GetUserPosition(userID);
     if ((transform.position - userPosition).magnitude < minimumPositionDelta)
-      transform.position = manager.GetUserPosition(userID);
+      transform.position = userPosition;
     else
       transform.position = Vector3.Lerp(transform.position, userPosition, Time.deltaTime * JointAdjustmentSpeed);
   }
 
 	private void updateJoints(KinectManager manager, uint userID) {
+    allJointsVisible = true;
+
 		Vector3 userPosition = transform.position, jointPosition;
 		Quaternion jointRotation;
-
     int jointIndex;
     // update the local positions of the joints
     foreach (string joint in Joints.Keys) {
 			jointIndex = Array.IndexOf(jointNames, joint);
 
 			if (!manager.IsJointTracked(userID, jointIndex)) {
+        allJointsVisible = false;
         Joints[joint].gameObject.SetActive(false);
         continue;
       }
@@ -207,6 +254,45 @@ public class UserController : MonoBehaviour {
 			lines[joint].SetPosition(1, Joints[joint].transform.position);
 		}
 	}
+
+  private void calibrateSpace() {
+    if (!allJointsVisible)
+      return;
+
+    Vector3 userPosition = transform.position;
+
+    if (bindingTrapezoid == null) { // first scan of user
+      bindingTrapezoid = new Vector3[4];
+      for (uint i = 0; i < 4; i++) {
+        bindingTrapezoid[i] = userPosition;
+        bindingTrapezoid[i].y = 0f;
+      }
+      return;
+    }
+
+    int j = (userPosition.x < 0f ? 0 : 1) + (userPosition.z < 0f ? 2 : 0);
+    bindingTrapezoid[j] = trapezoidFunctions[j](bindingTrapezoid[j], userPosition);
+  }
+
+  private void buildBoundaries() {
+    bindingObjects = new GameObject[4];
+    int[] trapezoidPaths = {0, 1, 3, 2, 0};
+
+    Vector3 fromPoint, toPoint, boundaryVector;
+    Transform boundary;
+    for (uint i = 0; i < 4; i++) {
+      fromPoint = bindingTrapezoid[trapezoidPaths[i]];
+      toPoint = bindingTrapezoid[trapezoidPaths[i+1]];
+      boundaryVector = toPoint-fromPoint;
+
+      bindingObjects[i] = Instantiate(BoundaryObject) as GameObject;
+      boundary = bindingObjects[i].transform;
+
+      boundary.localScale = new Vector3(boundary.localScale.x, boundary.localScale.y, boundaryVector.magnitude);
+      boundary.position += fromPoint + boundaryVector/2;
+      boundary.LookAt(toPoint + new Vector3(0f, boundary.localScale.y, 0f));
+    }
+  }
 
   private GameObject getDominantHand() {
     return RightHanded ? Hand_Right : Hand_Left;
