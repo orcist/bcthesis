@@ -1,15 +1,20 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class MenuController : MonoBehaviour {
+	public UserController userController;
+	public GameObject Slider;
 
-	// Use this for initialization
-	void Start () {
-	
+	private float maxHeight;
+
+	void Start() {
+		maxHeight = Slider.transform.parent.GetComponent<RectTransform>().sizeDelta.y;
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	
+	void Update() {
+		adjustSlider();
+	}
+	private void adjustSlider() {
+		float newHeight = userController.GetRecessiveHandAngle() * maxHeight;
+		RectTransform sliderTransform = Slider.GetComponent<RectTransform>();
+		sliderTransform.sizeDelta = new Vector2(sliderTransform.sizeDelta.x, newHeight);
 	}
 }
