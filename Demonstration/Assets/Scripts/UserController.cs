@@ -65,8 +65,6 @@ public class UserController : MonoBehaviour {
 
 	private Dictionary<string, LineRenderer> lines;
 
-	private Vector3 initialPosition;
-
   private float minimumPositionDelta = 0.2f; // epsilon for joint and user position interpolation (in unity units ~ meters)
   private float minimumRotationDelta = 5f; // epsilon for joint and user rotation interpolation (in degrees)
 
@@ -169,8 +167,6 @@ public class UserController : MonoBehaviour {
 	}
 
 	private void resetUser() {
-    transform.position = initialPosition;
-
     foreach (string joint in Joints.Keys) {
       Joints[joint].gameObject.SetActive(false);
 

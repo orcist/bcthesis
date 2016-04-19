@@ -69,6 +69,7 @@ public class MenuStructure : MonoBehaviour {
     );
 
     Reset();
+    ActivateOption(OPTION.DOWN);
   }
 
   public void ActivateOption(string option) {
@@ -88,7 +89,6 @@ public class MenuStructure : MonoBehaviour {
   public void Reset() {
     CurrentNode = startNode;
     if (DebugMode) Debug.Log("Menu reset, now at startNode.");
-
     rebuildMenu(CurrentNode.ChildNodes);
   }
 
