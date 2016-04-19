@@ -66,7 +66,6 @@ public class UserController : MonoBehaviour {
 	private Dictionary<string, LineRenderer> lines;
 
 	private Vector3 initialPosition;
-	private Quaternion initialRotation;
 
   private float minimumPositionDelta = 0.2f; // epsilon for joint and user position interpolation (in unity units ~ meters)
   private float minimumRotationDelta = 5f; // epsilon for joint and user rotation interpolation (in degrees)
@@ -171,7 +170,6 @@ public class UserController : MonoBehaviour {
 
 	private void resetUser() {
     transform.position = initialPosition;
-    transform.rotation = initialRotation;
 
     foreach (string joint in Joints.Keys) {
       Joints[joint].gameObject.SetActive(false);
@@ -208,11 +206,8 @@ public class UserController : MonoBehaviour {
         continue;
       }
 
-      jointPosition = manager.GetJointPosition(userID, jointIndex);
+      jointPosition = manager.GetJointPosition(userID, jointIndex) - userPosition;
       jointRotation = manager.GetJointOrientation(userID, jointIndex, true);
-
-      jointPosition -= userPosition;
-      jointRotation = initialRotation * jointRotation;
 
       if (!Joints[joint].gameObject.activeSelf) {
         Joints[joint].transform.localPosition = jointPosition;
@@ -312,6 +307,6 @@ public class UserController : MonoBehaviour {
       return 0f;
 
     Vector3 armVector = recessiveHand.transform.position - getRecessiveShoulder().transform.position;
-    return Vector3.Angle(-Vector3.up, armVector.normalized);
+    return Vector3.Angle(-Vector3.up, armVector.normalized) / 180.0f;
   }
 }
