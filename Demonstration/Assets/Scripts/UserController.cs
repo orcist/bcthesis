@@ -65,8 +65,6 @@ public class UserController : MonoBehaviour {
 
 	private Dictionary<string, LineRenderer> lines;
 
-	private Vector3 initialPosition;
-
   private float minimumPositionDelta = 0.2f; // epsilon for joint and user position interpolation (in unity units ~ meters)
   private float minimumRotationDelta = 5f; // epsilon for joint and user rotation interpolation (in degrees)
 
@@ -169,8 +167,6 @@ public class UserController : MonoBehaviour {
 	}
 
 	private void resetUser() {
-    transform.position = initialPosition;
-
     foreach (string joint in Joints.Keys) {
       Joints[joint].gameObject.SetActive(false);
 
@@ -304,7 +300,7 @@ public class UserController : MonoBehaviour {
   public float GetRecessiveHandAngle() {
     GameObject recessiveHand = getRecessiveHand();
     if (!recessiveHand.gameObject.activeSelf)
-      return 0f;
+      return -1.0f;
 
     Vector3 armVector = recessiveHand.transform.position - getRecessiveShoulder().transform.position;
     return Vector3.Angle(-Vector3.up, armVector.normalized) / 180.0f;
