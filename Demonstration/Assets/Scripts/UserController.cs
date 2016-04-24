@@ -300,7 +300,7 @@ public class UserController : MonoBehaviour {
   public float GetRecessiveHandAngle() {
     GameObject recessiveHand = getRecessiveHand();
     if (!recessiveHand.gameObject.activeSelf)
-      return 0f;
+      return -1.0f;
 
     Vector3 armVector = recessiveHand.transform.position - getRecessiveShoulder().transform.position;
     return Vector3.Angle(-Vector3.up, armVector.normalized) / 180.0f;
