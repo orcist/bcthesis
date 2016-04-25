@@ -37,6 +37,7 @@ public class MenuStructure : MonoBehaviour {
 
   private MenuNode startNode, blankNode = new MenuNode("", null, null);
   private Dictionary<string, Action> callbacks;
+  private ManipulationController manipulationController;
 
   void Awake() {
     callbacks = new Dictionary<string, Action>() {
@@ -47,12 +48,9 @@ public class MenuStructure : MonoBehaviour {
 
     startNode = new MenuNode(
       "Start", null, new Dictionary<string, MenuNode>() {
-        {OPTION.UP, new MenuNode("Additional actions.", null, new Dictionary<string, MenuNode>() {
-          {OPTION.UP, new MenuNode("Undo the last change.", callbacks["n/a"], null)},
-          {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", null, new Dictionary<string, MenuNode>())},
-          {OPTION.DOWN, new MenuNode("Touch the characters joint to start animating.", null, new Dictionary<string, MenuNode>())},
-        })},
-        {OPTION.DOWN, new MenuNode("Character animation.", null, new Dictionary<string, MenuNode>() {
+        {OPTION.UP, new MenuNode("Undo the last change.", callbacks["n/a"], null)},
+        {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", null, new Dictionary<string, MenuNode>())},
+        {OPTION.DOWN, new MenuNode("Touch the characters joint to start animating.", null, new Dictionary<string, MenuNode>() {
           {OPTION.UP, new MenuNode("Do you want to work with this joint?.", null, null)},
           {OPTION.MIDDLE, new MenuNode("Rotate selected joint.", callbacks["n/a"], new Dictionary<string, MenuNode>() {
             {OPTION.UP, new MenuNode("Discard changes.", callbacks["n/a"], new Dictionary<string, MenuNode>() {
@@ -62,14 +60,12 @@ public class MenuStructure : MonoBehaviour {
             })},
             {OPTION.MIDDLE, new MenuNode("Adjust joint rotation to your liking.", null, null)},
             {OPTION.DOWN, new MenuNode("Save changes.", callbacks["n/a"], null)}
-          })},
-          {OPTION.DOWN, new MenuNode("To access additional actions break contact.", null, null)}
-        })}
-      }
+          })}
+        })
+      }}
     );
 
     Reset();
-    ActivateOption(OPTION.DOWN);
   }
 
   public void ActivateOption(string option) {
