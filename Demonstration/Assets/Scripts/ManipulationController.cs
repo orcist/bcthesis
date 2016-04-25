@@ -68,6 +68,10 @@ public class ManipulationController : MonoBehaviour {
 					highlightedJointAnimator.SetTrigger("Highlighted");
 				}
 				cursorAnimator.SetTrigger("Hidden");
+			}},
+			{"rotate highlighted joint", () => {
+				cursorAnimator.SetTrigger("Normal");
+				HighlightedJoint.transform.LookAt(cursor.transform);
 			}}
 		};
 	}

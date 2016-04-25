@@ -168,7 +168,7 @@ public class UserController : MonoBehaviour {
 
 	private void resetUser() {
     foreach (string joint in Joints.Keys) {
-      // Joints[joint].gameObject.SetActive(false); // @fixme uncomment this after testing
+      Joints[joint].gameObject.SetActive(false);
 
 			Joints[joint].transform.localPosition = Vector3.zero;
       Joints[joint].transform.localRotation = Quaternion.identity;

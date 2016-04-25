@@ -45,6 +45,9 @@ public class MenuStructure : MonoBehaviour {
     callbacks = new Dictionary<string, Action>() {
       {"empty", () => {}},
       {"reset", () => Reset()},
+      {"rotate joint", () => {
+        manipulator.assignJob("rotate highlighted joint");
+      }},
       {"n/a", () => { Debug.Log("This functionality is not yet implemented."); }},
     };
 
@@ -54,7 +57,7 @@ public class MenuStructure : MonoBehaviour {
         {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", null, new Dictionary<string, MenuNode>())},
         {OPTION.DOWN, new MenuNode("Touch the characters joint to start animating.", null, new Dictionary<string, MenuNode>() {
           {OPTION.UP, new MenuNode("Do you want to work with this joint?.", null, null)},
-          {OPTION.MIDDLE, new MenuNode("Rotate selected joint.", callbacks["n/a"], new Dictionary<string, MenuNode>() {
+          {OPTION.MIDDLE, new MenuNode("Rotate selected joint.", callbacks["rotate joint"], new Dictionary<string, MenuNode>() {
             {OPTION.UP, new MenuNode("Discard changes.", callbacks["n/a"], new Dictionary<string, MenuNode>() {
               {OPTION.UP, new MenuNode("Are you sure about that?", null, null)},
               {OPTION.MIDDLE, new MenuNode("Yes, discard the changes.", callbacks["reset"], null)},
