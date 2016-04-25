@@ -127,7 +127,7 @@ public class UserController : MonoBehaviour {
 		if (SkeletonLine)
 			foreach (string joint in Joints.Keys) {
 				lines[joint] = Instantiate(SkeletonLine) as LineRenderer;
-				lines[joint].transform.parent = transform;
+        lines[joint].transform.parent = Joints[joint].transform;
 			}
 
 		if (CursorObject)
@@ -141,9 +141,9 @@ public class UserController : MonoBehaviour {
     cursor.transform.parent = parentJoint.transform;
     cursor.transform.localPosition = Vector3.zero;
     cursor.transform.rotation = parentJoint.transform.rotation;
+    cursor.tag = "User cursor";
 	}
 
-	// Update is called once per frame
 	void Update () {
 		KinectManager manager = KinectManager.Instance;
 		uint userID = (manager != null) ? manager.GetPlayer1ID() : 0;

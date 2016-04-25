@@ -1528,6 +1528,7 @@ MonoBehaviour:
   SkeletonContainer: {fileID: 903007724}
   MarkerObject: {fileID: 100902, guid: 34b4793dacbc5944387f5f9ca792f14c, type: 2}
   MarkerScaleFactor: 0.85
+  HighlightedJoint: {fileID: 0}
 --- !u!1001 &980185333
 Prefab:
   m_ObjectHideFlags: 0

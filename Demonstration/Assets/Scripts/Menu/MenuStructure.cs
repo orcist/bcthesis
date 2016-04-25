@@ -37,24 +37,27 @@ public class MenuStructure : MonoBehaviour {
 
   private MenuNode startNode, blankNode = new MenuNode("", null, null);
   private Dictionary<string, Action> callbacks;
+  private ManipulationController manipulator;
 
-  void Awake() {
+  void Start() {
+    manipulator = GetComponent<ManipulationController>();
+
     callbacks = new Dictionary<string, Action>() {
       {"empty", () => {}},
       {"reset", () => Reset()},
+      {"rotate joint", () => {
+        manipulator.assignJob("rotate highlighted joint");
+      }},
       {"n/a", () => { Debug.Log("This functionality is not yet implemented."); }},
     };
 
     startNode = new MenuNode(
       "Start", null, new Dictionary<string, MenuNode>() {
-        {OPTION.UP, new MenuNode("Additional actions.", null, new Dictionary<string, MenuNode>() {
-          {OPTION.UP, new MenuNode("Undo the last change.", callbacks["n/a"], null)},
-          {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", null, new Dictionary<string, MenuNode>())},
-          {OPTION.DOWN, new MenuNode("Touch the characters joint to start animating.", null, new Dictionary<string, MenuNode>())},
-        })},
-        {OPTION.DOWN, new MenuNode("Character animation.", null, new Dictionary<string, MenuNode>() {
+        {OPTION.UP, new MenuNode("Undo the last change.", callbacks["n/a"], null)},
+        {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", null, new Dictionary<string, MenuNode>())},
+        {OPTION.DOWN, new MenuNode("Touch the characters joint to start animating.", null, new Dictionary<string, MenuNode>() {
           {OPTION.UP, new MenuNode("Do you want to work with this joint?.", null, null)},
-          {OPTION.MIDDLE, new MenuNode("Rotate selected joint.", callbacks["n/a"], new Dictionary<string, MenuNode>() {
+          {OPTION.MIDDLE, new MenuNode("Rotate selected joint.", callbacks["rotate joint"], new Dictionary<string, MenuNode>() {
             {OPTION.UP, new MenuNode("Discard changes.", callbacks["n/a"], new Dictionary<string, MenuNode>() {
               {OPTION.UP, new MenuNode("Are you sure about that?", null, null)},
               {OPTION.MIDDLE, new MenuNode("Yes, discard the changes.", callbacks["reset"], null)},
@@ -62,14 +65,12 @@ public class MenuStructure : MonoBehaviour {
             })},
             {OPTION.MIDDLE, new MenuNode("Adjust joint rotation to your liking.", null, null)},
             {OPTION.DOWN, new MenuNode("Save changes.", callbacks["n/a"], null)}
-          })},
-          {OPTION.DOWN, new MenuNode("To access additional actions break contact.", null, null)}
-        })}
-      }
+          })}
+        })
+      }}
     );
 
     Reset();
-    ActivateOption(OPTION.DOWN);
   }
 
   public void ActivateOption(string option) {
@@ -89,6 +90,7 @@ public class MenuStructure : MonoBehaviour {
   public void Reset() {
     CurrentNode = startNode;
     if (DebugMode) Debug.Log("Menu reset, now at startNode.");
+    manipulator.assignJob("track cursor-model collisions");
     rebuildMenu(CurrentNode.ChildNodes);
   }
 
