@@ -11,6 +11,7 @@ GameObject:
   - 33: {fileID: 3356138}
   - 135: {fileID: 13545618}
   - 23: {fileID: 2318186}
+  - 95: {fileID: 9571068}
   m_Layer: 0
   m_Name: CursorObject
   m_TagString: Untagged
@@ -63,6 +64,23 @@ MeshFilter:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 100902}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!95 &9571068
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100902}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 5a894960049f6814392da3b0ebe47e9c, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
 --- !u!135 &13545618
 SphereCollider:
   m_ObjectHideFlags: 1

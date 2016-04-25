@@ -7,29 +7,43 @@ public class ManipulationController : MonoBehaviour {
 	public GameObject MarkerObject;
 	public float MarkerScaleFactor =  0.85f;
 
+	public GameObject HighlightedJoint;
+
+	private MenuStructure menu;
 	private GameObject cursor;
+	private Animator cursorAnimator;
 	private Dictionary<string, Action> manipulators;
-	private Action job;
+	private string jobLabel;
 	private List<GameObject> markers;
 
-	private GameObject highlightedJoint;
+	private Animator highlightedJointAnimator;
 
 	void Start () {
 		markers = new List<GameObject>();
 		attachMarkersRecursively(SkeletonContainer.transform.GetChild(0), 1);
+
+		menu = GetComponent<MenuStructure>();
+
 		cursor = GameObject.FindGameObjectWithTag("User cursor");
+		cursorAnimator = cursor.GetComponent<Animator>();
 
 		manipulators = new Dictionary<string, Action>() {
 			{"track cursor-model collisions", () => {
 				Vector3 cursorPosition = cursor.transform.position;
 				Collider[] colliders = Physics.OverlapSphere(
 					cursorPosition,
-					cursor.GetComponent<SphereCollider>().radius,
+					cursor.transform.lossyScale.x/2,
 					1 << LayerMask.NameToLayer("Joint marker")
 				);
 
 				if (colliders.Length == 0) {
-					highlightedJoint = null;
+					cursorAnimator.SetTrigger("Normal");
+
+					if (HighlightedJoint != null) {
+						highlightedJointAnimator.SetTrigger("Normal");
+						HighlightedJoint = null;
+						menu.Reset();
+					}
 					return;
 				}
 
@@ -43,21 +57,27 @@ public class ManipulationController : MonoBehaviour {
 						closest = collider.transform;
 				}
 
-				if (closest.parent.gameObject != highlightedJoint) {
-					highlightedJoint = closest.parent.gameObject;
-					Debug.Log(highlightedJoint.name);
+				if (closest.parent.gameObject != HighlightedJoint) {
+					if (HighlightedJoint != null)
+						highlightedJointAnimator.SetTrigger("Normal");
+					else
+						menu.ActivateOption(OPTION.DOWN);
+
+					HighlightedJoint = closest.parent.gameObject;
+					highlightedJointAnimator = closest.GetComponent<Animator>();
+					highlightedJointAnimator.SetTrigger("Highlighted");
 				}
+				cursorAnimator.SetTrigger("Hidden");
 			}}
 		};
-
-		job = manipulators["track cursor-model collisions"];
 	}
 	void Update() {
-		job.Invoke();
+		if (jobLabel.Length > 0)
+			manipulators[jobLabel].Invoke();
 	}
 
-	public void assignJob(string jobLabel) {
-		job = manipulators[jobLabel];
+	public void assignJob(string job) {
+		jobLabel = job;
 	}
 
 	private void attachMarkersRecursively(Transform joint, uint depth) {
@@ -68,8 +88,6 @@ public class ManipulationController : MonoBehaviour {
 		marker.transform.parent = joint.transform;
 		marker.transform.localPosition = Vector3.zero;
 		marker.transform.localScale *= Mathf.Pow(MarkerScaleFactor, depth);
-		marker.GetComponent<SphereCollider>().radius = marker.transform.lossyScale.x/2;
-		marker.layer = LayerMask.NameToLayer("Joint marker");
 
 		markers.Add(marker);
 	}

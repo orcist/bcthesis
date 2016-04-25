@@ -37,9 +37,11 @@ public class MenuStructure : MonoBehaviour {
 
   private MenuNode startNode, blankNode = new MenuNode("", null, null);
   private Dictionary<string, Action> callbacks;
-  private ManipulationController manipulationController;
+  private ManipulationController manipulator;
 
-  void Awake() {
+  void Start() {
+    manipulator = GetComponent<ManipulationController>();
+
     callbacks = new Dictionary<string, Action>() {
       {"empty", () => {}},
       {"reset", () => Reset()},
@@ -85,6 +87,7 @@ public class MenuStructure : MonoBehaviour {
   public void Reset() {
     CurrentNode = startNode;
     if (DebugMode) Debug.Log("Menu reset, now at startNode.");
+    manipulator.assignJob("track cursor-model collisions");
     rebuildMenu(CurrentNode.ChildNodes);
   }
 
