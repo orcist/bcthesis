@@ -65,14 +65,15 @@ public class ManipulationController : MonoBehaviour {
 
 					HighlightedJoint = closest.parent.gameObject;
 					highlightedJointAnimator = closest.GetComponent<Animator>();
-					highlightedJointAnimator.SetTrigger("Highlighted");
+					highlightedJointAnimator.SetTrigger("Highlight");
 				}
-				cursorAnimator.SetTrigger("Hidden");
+				cursorAnimator.SetTrigger("Hide");
 			}},
 			{"rotate highlighted joint", () => {
 				cursorAnimator.SetTrigger("Normal");
 				HighlightedJoint.transform.LookAt(cursor.transform);
-			}}
+			}},
+			{"standby", () => {}}
 		};
 	}
 	void Update() {
