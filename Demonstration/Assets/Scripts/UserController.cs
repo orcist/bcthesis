@@ -140,7 +140,7 @@ public class UserController : MonoBehaviour {
 
     cursor.transform.parent = parentJoint.transform;
     cursor.transform.localPosition = Vector3.zero;
-    cursor.transform.rotation = parentJoint.transform.rotation;
+    cursor.transform.localRotation = Quaternion.identity;
     cursor.tag = "User cursor";
 	}
 

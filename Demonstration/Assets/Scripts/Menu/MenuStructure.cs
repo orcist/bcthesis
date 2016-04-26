@@ -32,10 +32,11 @@ public class MenuNode {
 
 public class MenuStructure : MonoBehaviour {
   public Button[] OptionButtons;
+  public GameObject AdditionalActions;
+  public Transform HeadJoint;
   public bool DebugMode = false;
-  public MenuNode CurrentNode;
 
-  private MenuNode startNode, blankNode = new MenuNode("", null, null);
+  private MenuNode startNode, currentNode, emptyNode = new MenuNode("", null, null);
   private Dictionary<string, Action> callbacks;
   private ManipulationController manipulator;
 
@@ -48,13 +49,29 @@ public class MenuStructure : MonoBehaviour {
       {"rotate joint", () => {
         manipulator.assignJob("rotate highlighted joint");
       }},
+      {"open additional", () => {
+        manipulator.assignJob("standby");
+
+        AdditionalActions.transform.position = new Vector3(HeadJoint.position.x, 0f, HeadJoint.position.z) +
+          (Quaternion.AngleAxis(HeadJoint.rotation.eulerAngles.y, Vector3.up) * Vector3.forward);
+        AdditionalActions.transform.rotation = Quaternion.AngleAxis(HeadJoint.rotation.eulerAngles.y, Vector3.up);
+
+        AdditionalActions.GetComponent<Animator>().SetTrigger("Display");
+      }},
+      {"close additional", () => {
+        AdditionalActions.GetComponent<Animator>().SetTrigger("Hide");
+        Reset();
+      }},
       {"n/a", () => { Debug.Log("This functionality is not yet implemented."); }},
     };
 
     startNode = new MenuNode(
       "Start", null, new Dictionary<string, MenuNode>() {
         {OPTION.UP, new MenuNode("Undo the last change.", callbacks["n/a"], null)},
-        {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", null, new Dictionary<string, MenuNode>())},
+        {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", callbacks["open additional"], new Dictionary<string, MenuNode>() {
+          {OPTION.MIDDLE, new MenuNode("Touch a button to execute action.", null, null)},
+          {OPTION.DOWN, new MenuNode("Exit additional actions menu.", callbacks["close additional"], null)}
+        })},
         {OPTION.DOWN, new MenuNode("Touch the characters joint to start animating.", null, new Dictionary<string, MenuNode>() {
           {OPTION.UP, new MenuNode("Do you want to work with this joint?.", null, null)},
           {OPTION.MIDDLE, new MenuNode("Rotate selected joint.", callbacks["rotate joint"], new Dictionary<string, MenuNode>() {
@@ -74,29 +91,29 @@ public class MenuStructure : MonoBehaviour {
   }
 
   public void ActivateOption(string option) {
-    if (CurrentNode.ChildNodes == null || !CurrentNode.ChildNodes.ContainsKey(option))
+    if (currentNode.ChildNodes == null || !currentNode.ChildNodes.ContainsKey(option))
       Debug.LogError("This option isn't available in this context.");
 
-    CurrentNode = CurrentNode.ChildNodes[option];
-    if (DebugMode) Debug.Log("Entered node: " + CurrentNode);
+    currentNode = currentNode.ChildNodes[option];
+    if (DebugMode) Debug.Log("Entered node: " + currentNode);
 
-    if (CurrentNode.Trigger != null)
-      CurrentNode.Trigger();
-    else if (CurrentNode.ChildNodes == null && DebugMode)
-      Debug.LogWarning("Activated node without trigger or child nodes: " + CurrentNode);
+    if (currentNode.Trigger != null)
+      currentNode.Trigger();
+    else if (currentNode.ChildNodes == null && DebugMode)
+      Debug.LogWarning("Activated node without trigger or child nodes: " + currentNode);
 
-    rebuildMenu(CurrentNode.ChildNodes);
+    rebuildMenu(currentNode.ChildNodes);
   }
   public void Reset() {
-    CurrentNode = startNode;
+    currentNode = startNode;
     if (DebugMode) Debug.Log("Menu reset, now at startNode.");
     manipulator.assignJob("track cursor-model collisions");
-    rebuildMenu(CurrentNode.ChildNodes);
+    rebuildMenu(currentNode.ChildNodes);
   }
 
   private void rebuildMenu(Dictionary<string, MenuNode> newNodes) {
     foreach (Button option in OptionButtons)
-      buildOption(option, !newNodes.ContainsKey(option.name) ? blankNode : newNodes[option.name]);
+      buildOption(option, !newNodes.ContainsKey(option.name) ? emptyNode : newNodes[option.name]);
   }
   private void buildOption(Button button, MenuNode node) {
     button.GetComponentInChildren<Text>().text = node.NodeLabel;
