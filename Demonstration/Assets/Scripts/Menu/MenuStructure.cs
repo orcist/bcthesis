@@ -33,7 +33,7 @@ public class MenuNode {
 public class MenuStructure : MonoBehaviour {
   public Button[] OptionButtons;
   public GameObject AdditionalActions;
-  public Transform HeadJoint;
+  public Transform UserHead;
   public bool DebugMode = false;
 
   private MenuNode startNode, currentNode, emptyNode = new MenuNode("", null, null);
@@ -52,9 +52,9 @@ public class MenuStructure : MonoBehaviour {
       {"open additional", () => {
         manipulator.assignJob("standby");
 
-        AdditionalActions.transform.position = new Vector3(HeadJoint.position.x, 0f, HeadJoint.position.z) +
-          (Quaternion.AngleAxis(HeadJoint.rotation.eulerAngles.y, Vector3.up) * Vector3.forward);
-        AdditionalActions.transform.rotation = Quaternion.AngleAxis(HeadJoint.rotation.eulerAngles.y, Vector3.up);
+        AdditionalActions.transform.position = new Vector3(UserHead.position.x, 0f, UserHead.position.z) +
+          (Quaternion.AngleAxis(UserHead.rotation.eulerAngles.y, Vector3.up) * Vector3.forward);
+        AdditionalActions.transform.rotation = Quaternion.AngleAxis(UserHead.rotation.eulerAngles.y, Vector3.up);
 
         AdditionalActions.GetComponent<Animator>().SetTrigger("Display");
       }},

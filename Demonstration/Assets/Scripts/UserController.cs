@@ -141,7 +141,6 @@ public class UserController : MonoBehaviour {
     cursor.transform.parent = parentJoint.transform;
     cursor.transform.localPosition = Vector3.zero;
     cursor.transform.localRotation = Quaternion.identity;
-    cursor.tag = "User cursor";
 	}
 
 	void Update () {
@@ -152,7 +151,7 @@ public class UserController : MonoBehaviour {
       buildBoundaries();
 
 		if (userID <= 0) {
-			resetUser();
+			// resetUser();
 			return;
     }
 

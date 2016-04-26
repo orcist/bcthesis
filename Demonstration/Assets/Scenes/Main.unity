@@ -1498,7 +1498,7 @@ MonoBehaviour:
   - {fileID: 1625936731}
   - {fileID: 1803377919}
   AdditionalActions: {fileID: 1427908299}
-  HeadJoint: {fileID: 2030470096}
+  UserHead: {fileID: 2030470096}
   DebugMode: 1
 --- !u!4 &964533313
 Transform:
