@@ -1,17 +1,23 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class CollideClick : MonoBehaviour {
+public class WorldPointerHandler : MonoBehaviour {
 	void OnTriggerEnter(Collider other) {
 		ExecuteEvents.Execute(
-			other.gameObject,
+			other.transform.parent.gameObject,
 			new PointerEventData(EventSystem.current),
 			ExecuteEvents.pointerEnterHandler
 		);
 	}
 	void OnTriggerExit(Collider other) {
+		GameObject buttonObject = other.transform.parent.gameObject;
 		ExecuteEvents.Execute(
-			other.gameObject,
+			buttonObject,
+			new PointerEventData(EventSystem.current),
+			ExecuteEvents.pointerClickHandler
+		);
+		ExecuteEvents.Execute(
+			buttonObject,
 			new PointerEventData(EventSystem.current),
 			ExecuteEvents.pointerExitHandler
 		);

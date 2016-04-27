@@ -4,19 +4,18 @@ using System.Collections.Generic;
 
 public class UserController : MonoBehaviour {
   public bool RightHanded = true;
-	public GameObject CursorObject;
-
   public bool Calibrated = false;
+	public bool DrawSkeleton = false;
+
+	public GameObject CursorObject;
   public GameObject BoundaryObject;
 
-  public float JointAdjustmentSpeed = 1.0f;
+  public float JointAdjustmentSpeed = 4.0f;
   public GameObject Hip_Center, Spine, Shoulder_Center, Head,
     Shoulder_Left, Elbow_Left, Wrist_Left, Hand_Left,
     Shoulder_Right, Elbow_Right, Wrist_Right, Hand_Right,
     Hip_Left, Knee_Left, Ankle_Left, Foot_Left,
     Hip_Right, Knee_Right, Ankle_Right, Foot_Right;
-
-	public bool DrawSkeleton = false;
 	public LineRenderer SkeletonLine;
 
 	private string[] jointNames = {
@@ -62,7 +61,6 @@ public class UserController : MonoBehaviour {
     );} // (+-)
   };
   private GameObject[] bindingObjects;
-
 	private Dictionary<string, LineRenderer> lines;
 
   private float minimumPositionDelta = 0.2f; // epsilon for joint and user position interpolation (in unity units ~ meters)
@@ -133,16 +131,6 @@ public class UserController : MonoBehaviour {
 		if (CursorObject)
 			mountCursor();
 	}
-
-	private void mountCursor() {
-		GameObject cursor = Instantiate(CursorObject) as GameObject,
-      parentJoint = getDominantHand();
-
-    cursor.transform.parent = parentJoint.transform;
-    cursor.transform.localPosition = Vector3.zero;
-    cursor.transform.localRotation = Quaternion.identity;
-	}
-
 	void Update () {
 		KinectManager manager = KinectManager.Instance;
 		uint userID = (manager != null) ? manager.GetPlayer1ID() : 0;
@@ -151,7 +139,7 @@ public class UserController : MonoBehaviour {
       buildBoundaries();
 
 		if (userID <= 0) {
-			// resetUser();
+			resetUser();
 			return;
     }
 
@@ -165,6 +153,15 @@ public class UserController : MonoBehaviour {
 			drawSkeleton();
 	}
 
+  public float GetRecessiveHandAngle() {
+    GameObject recessiveHand = getRecessiveHand();
+    if (!recessiveHand.gameObject.activeSelf)
+      return -1.0f;
+
+    Vector3 armVector = recessiveHand.transform.position - getRecessiveShoulder().transform.position;
+    return Vector3.Angle(-Vector3.up, armVector.normalized) / 180.0f;
+  }
+
 	private void resetUser() {
     foreach (string joint in Joints.Keys) {
       Joints[joint].gameObject.SetActive(false);
@@ -176,20 +173,27 @@ public class UserController : MonoBehaviour {
     }
     allJointsVisible = false;
 	}
+	private void mountCursor() {
+		GameObject cursor = Instantiate(CursorObject) as GameObject,
+      parentJoint = getDominantHand();
 
+    cursor.transform.parent = parentJoint.transform;
+    cursor.transform.localPosition = Vector3.zero;
+    cursor.transform.localRotation = Quaternion.Euler(0, 180f, 0);
+	}
   private void updateUserPosition(KinectManager manager, uint userID) {
     Vector3 userPosition = manager.GetUserPosition(userID);
-    if ((transform.position - userPosition).magnitude < minimumPositionDelta)
+    userPosition.x *= -1;
+    if (Vector3.Distance(transform.position, userPosition) < minimumPositionDelta)
       transform.position = userPosition;
     else
       transform.position = Vector3.Lerp(transform.position, userPosition, Time.deltaTime * JointAdjustmentSpeed);
   }
-
 	private void updateJoints(KinectManager manager, uint userID) {
     allJointsVisible = true;
 
 		Vector3 userPosition = transform.position, jointPosition;
-		Quaternion jointRotation;
+		Quaternion userRotation = transform.rotation, jointRotation;
     int jointIndex;
     // update the local positions of the joints
     foreach (string joint in Joints.Keys) {
@@ -202,7 +206,8 @@ public class UserController : MonoBehaviour {
       }
 
       jointPosition = manager.GetJointPosition(userID, jointIndex) - userPosition;
-      jointRotation = manager.GetJointOrientation(userID, jointIndex, true);
+      jointPosition.z *= -1;
+      jointRotation = manager.GetJointOrientation(userID, jointIndex, true) * userRotation;
 
       if (!Joints[joint].gameObject.activeSelf) {
         Joints[joint].transform.localPosition = jointPosition;
@@ -229,22 +234,6 @@ public class UserController : MonoBehaviour {
       Joints[joint].gameObject.SetActive(true);
     }
 	}
-
-	private void drawSkeleton() {
-		string parentJoint;
-		foreach (string joint in Joints.Keys) {
-			parentJoint = jointParents[joint];
-			if (!Joints[joint].gameObject.activeSelf || !Joints[parentJoint].gameObject.activeSelf) {
-				lines[joint].gameObject.SetActive(false);
-				continue;
-			}
-
-			lines[joint].gameObject.SetActive(true);
-			lines[joint].SetPosition(0, Joints[parentJoint].transform.position);
-			lines[joint].SetPosition(1, Joints[joint].transform.position);
-		}
-	}
-
   private void calibrateSpace() {
     if (!allJointsVisible)
       return;
@@ -257,13 +246,11 @@ public class UserController : MonoBehaviour {
         bindingTrapezoid[i] = userPosition;
         bindingTrapezoid[i].y = 0f;
       }
-      return;
+    } else {
+      int j = (userPosition.x < 0f ? 0 : 1) + (userPosition.z < 0f ? 2 : 0);
+      bindingTrapezoid[j] = trapezoidFunctions[j](bindingTrapezoid[j], userPosition);
     }
-
-    int j = (userPosition.x < 0f ? 0 : 1) + (userPosition.z < 0f ? 2 : 0);
-    bindingTrapezoid[j] = trapezoidFunctions[j](bindingTrapezoid[j], userPosition);
   }
-
   private void buildBoundaries() {
     bindingObjects = new GameObject[4];
     int[] trapezoidPaths = {0, 1, 3, 2, 0};
@@ -283,7 +270,20 @@ public class UserController : MonoBehaviour {
       boundary.LookAt(toPoint + new Vector3(0f, boundary.localScale.y, 0f));
     }
   }
+	private void drawSkeleton() {
+		string parentJoint;
+		foreach (string joint in Joints.Keys) {
+			parentJoint = jointParents[joint];
+			if (!Joints[joint].gameObject.activeSelf || !Joints[parentJoint].gameObject.activeSelf) {
+				lines[joint].gameObject.SetActive(false);
+				continue;
+			}
 
+			lines[joint].gameObject.SetActive(true);
+			lines[joint].SetPosition(0, Joints[parentJoint].transform.position);
+			lines[joint].SetPosition(1, Joints[joint].transform.position);
+		}
+	}
   private GameObject getDominantHand() {
     return RightHanded ? Hand_Right : Hand_Left;
   }
@@ -294,14 +294,5 @@ public class UserController : MonoBehaviour {
 
   private GameObject getRecessiveShoulder() {
     return RightHanded ? Shoulder_Left : Shoulder_Right;
-  }
-
-  public float GetRecessiveHandAngle() {
-    GameObject recessiveHand = getRecessiveHand();
-    if (!recessiveHand.gameObject.activeSelf)
-      return -1.0f;
-
-    Vector3 armVector = recessiveHand.transform.position - getRecessiveShoulder().transform.position;
-    return Vector3.Angle(-Vector3.up, armVector.normalized) / 180.0f;
   }
 }

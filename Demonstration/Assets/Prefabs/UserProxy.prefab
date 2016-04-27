@@ -8,7 +8,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 416650}
-  - 33: {fileID: 3371742}
   m_Layer: 0
   m_Name: 03_Head
   m_TagString: Untagged
@@ -24,7 +23,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 421840}
-  - 33: {fileID: 3360914}
   m_Layer: 0
   m_Name: 05_Elbow_Left
   m_TagString: Untagged
@@ -40,7 +38,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 433772}
-  - 33: {fileID: 3345444}
   m_Layer: 0
   m_Name: 15_Foot_Left
   m_TagString: Untagged
@@ -56,7 +53,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 479496}
-  - 33: {fileID: 3302270}
   m_Layer: 0
   m_Name: 07_Hand_Left
   m_TagString: Untagged
@@ -72,7 +68,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 423332}
-  - 33: {fileID: 3342282}
   m_Layer: 0
   m_Name: 18_Ankle_Right
   m_TagString: Untagged
@@ -88,7 +83,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 457244}
-  - 33: {fileID: 3339050}
   m_Layer: 0
   m_Name: 00_Hip_Center
   m_TagString: Untagged
@@ -104,7 +98,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 467028}
-  - 33: {fileID: 3377012}
   m_Layer: 0
   m_Name: 09_Elbow_Right
   m_TagString: Untagged
@@ -120,7 +113,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 475616}
-  - 33: {fileID: 3331306}
   m_Layer: 0
   m_Name: 17_Knee_Right
   m_TagString: Untagged
@@ -136,7 +128,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 426120}
-  - 33: {fileID: 3352760}
   m_Layer: 0
   m_Name: 12_Hip_Left
   m_TagString: Untagged
@@ -152,7 +143,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 479022}
-  - 33: {fileID: 3350570}
   m_Layer: 0
   m_Name: 11_Hand_Right
   m_TagString: Untagged
@@ -168,7 +158,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 458604}
-  - 33: {fileID: 3379064}
   m_Layer: 0
   m_Name: 06_Wrist_Left
   m_TagString: Untagged
@@ -184,7 +173,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 473612}
-  - 33: {fileID: 3372326}
   m_Layer: 0
   m_Name: 10_Wrist_Right
   m_TagString: Untagged
@@ -200,7 +188,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 462360}
-  - 33: {fileID: 3345304}
   m_Layer: 0
   m_Name: 01_Spine
   m_TagString: Untagged
@@ -216,7 +203,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 412360}
-  - 33: {fileID: 3390020}
   m_Layer: 0
   m_Name: 16_Hip_Right
   m_TagString: Untagged
@@ -232,7 +218,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 498194}
-  - 33: {fileID: 3336178}
   m_Layer: 0
   m_Name: 02_Shoulder_Center
   m_TagString: Untagged
@@ -248,7 +233,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 479640}
-  - 33: {fileID: 3388230}
   m_Layer: 0
   m_Name: 14_Ankle_Left
   m_TagString: Untagged
@@ -264,7 +248,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 446692}
-  - 33: {fileID: 3300842}
   m_Layer: 0
   m_Name: 19_Foot_Right
   m_TagString: Untagged
@@ -280,7 +263,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 481120}
-  - 33: {fileID: 3308794}
   m_Layer: 0
   m_Name: 04_Shoulder_Left
   m_TagString: Untagged
@@ -296,7 +278,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 442276}
-  - 33: {fileID: 3329088}
   m_Layer: 0
   m_Name: 08_Shoulder_Right
   m_TagString: Untagged
@@ -328,7 +309,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 449408}
-  - 33: {fileID: 3356078}
   m_Layer: 0
   m_Name: 13_Knee_Left
   m_TagString: Untagged
@@ -342,7 +322,7 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 196250}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000016292068}
   m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -608,146 +588,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 406258}
   m_RootOrder: 2
---- !u!33 &3300842
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 164944}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3302270
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 116846}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3308794
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 173798}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3329088
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 175550}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3331306
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 138762}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3336178
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 154608}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3339050
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 119580}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3342282
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 119526}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3345304
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 151810}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3345444
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 114948}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3350570
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 143514}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3352760
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 141096}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3356078
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 196896}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3360914
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 108190}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3371742
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 104736}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3372326
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 150606}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3377012
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 136176}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3379064
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 146006}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3388230
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 163508}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
---- !u!33 &3390020
-MeshFilter:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 153450}
-  m_Mesh: {fileID: 4300000, guid: 5aa6f36584b40454d9d7f115bcfacad9, type: 3}
 --- !u!114 &11441056
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -760,10 +600,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RightHanded: 1
-  CursorObject: {fileID: 100902, guid: b3689a2189eeafb4ba33ae7e64ece0b3, type: 2}
   Calibrated: 0
+  DrawSkeleton: 0
+  CursorObject: {fileID: 100902, guid: b3689a2189eeafb4ba33ae7e64ece0b3, type: 2}
   BoundaryObject: {fileID: 110008, guid: 9d94b07a0dc366642a6586a22c09df72, type: 2}
-  JointAdjustmentSpeed: 1
+  JointAdjustmentSpeed: 4
   Hip_Center: {fileID: 119580}
   Spine: {fileID: 151810}
   Shoulder_Center: {fileID: 154608}
@@ -784,7 +625,6 @@ MonoBehaviour:
   Knee_Right: {fileID: 138762}
   Ankle_Right: {fileID: 119526}
   Foot_Right: {fileID: 164944}
-  DrawSkeleton: 0
   SkeletonLine: {fileID: 12000000, guid: 3a5878482d4c142b895a679f9f10a0a6, type: 2}
 --- !u!1001 &100100000
 Prefab:
