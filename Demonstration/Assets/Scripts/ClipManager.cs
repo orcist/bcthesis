@@ -6,14 +6,12 @@ using System.Collections.Generic;
 
 public class ClipManager : MonoBehaviour {
 	private GameObject model, root;
-	public Animation playback;
+	public Animation playback; // @todo change to private
 	private List<AnimationClip> cache;
 	private Dictionary<AnimationClip, Dictionary<GameObject, AnimationCurve[]>> curves;
 
 	private int currentKeyframe;
 	private ManipulationController manipulator;
-
-	private MenuController menuController;
 
 	void Start() {
 		GameObject skeleton = GetComponent<ManipulationController>().SkeletonContainer;
@@ -21,10 +19,8 @@ public class ClipManager : MonoBehaviour {
 		model = skeleton.transform.parent.gameObject;
 
 		manipulator = GetComponent<ManipulationController>();
-		menuController = GetComponent<MenuController>();
 
 		playback = model.AddComponent<Animation>();
-		menuController.playback = playback;
 
 		reset();
 	}
@@ -115,10 +111,9 @@ public class ClipManager : MonoBehaviour {
 		AnimationClip clip = new AnimationClip();
 		EditorUtility.CopySerialized(cache[cache.Count-1], clip);
 		clip.legacy = true;
-		playback.AddClip(clip, clip.name);
 
+		playback.AddClip(clip, clip.name);
 		playback.Play(clip.name);
-		menuController.newClip = true;
 	}
 	public void CreateKeyframe() {
 		currentKeyframe += 1;

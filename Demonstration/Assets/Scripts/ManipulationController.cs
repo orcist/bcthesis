@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 // Define symbols for code readability
@@ -17,83 +18,102 @@ public class ManipulationController : MonoBehaviour {
 	public GameObject HighlightedJoint;
 
 	private Dictionary<GameObject, Quaternion> defaultRotations;
-	private MenuStructure menu;
-	private GameObject cursor;
-	private Animator cursorAnimator;
-	private Dictionary<string, Action> manipulators;
-	private string todo;
+	private Dictionary<string, Action> jobs;
+	private string currentJob;
+	private List<GameObject> cursors;
 	private Animator highlightedJointAnimator;
+	private Animator highlightedCursorAnimator;
+	private bool highlightedCursorVisible = false;
+	private MenuStructure menu;
 
 	void Start () {
 		menu = GetComponent<MenuStructure>();
 
-		cursor = GameObject.FindGameObjectWithTag("User cursor");
-		cursorAnimator = cursor.GetComponent<Animator>();
+		cursors = new List<GameObject>(GameObject.FindGameObjectsWithTag("User cursor"));
 
 		Transform root = SkeletonContainer.transform.GetChild(0);
 		defaultRotations = new Dictionary<GameObject, Quaternion>();
 		memorizeTransforms(root);
 		attachMarkersRecursively(root, 1);
 
-		manipulators = new Dictionary<string, Action>() {
+		jobs = new Dictionary<string, Action>() {
 			{JOB.TRACK, () => {
-				Vector3 cursorPosition = cursor.transform.position;
-				Collider[] colliders = Physics.OverlapSphere(
-					cursorPosition,
-					cursor.transform.lossyScale.x/2,
-					1 << LayerMask.NameToLayer("Joint marker")
-				);
+				foreach (GameObject a in cursors)
+					if (!a.activeSelf) {
+						return;
+					}
 
-				if (colliders.Length == 0) {
-					if (cursorAnimator.isInitialized)
-						cursorAnimator.SetTrigger("Normal");
+				Dictionary<Collider, GameObject> nearJoints = new Dictionary<Collider, GameObject>();
+				foreach (GameObject c in cursors) {
+					Collider[] collidingJoints = Physics.OverlapSphere(
+						c.transform.position,
+						c.transform.lossyScale.x/2,
+						1 << LayerMask.NameToLayer("Joint marker")
+					);
+					for (uint i = 0; i < collidingJoints.Length; i++)
+						nearJoints.Add(collidingJoints[i], c);
+				}
 
+				if (nearJoints.Keys.Count == 0) {
 					if (HighlightedJoint != null) {
+						Debug.Log("keycount");
+						highlightedCursorAnimator.SetTrigger("Display");
 						highlightedJointAnimator.SetTrigger("Normal");
+
 						HighlightedJoint = null;
+
 						menu.Reset();
 					}
 					return;
 				}
 
-				Transform closest = colliders[0].transform;
-				float distance, shortest;
-				foreach (Collider collider in colliders) {
-					distance = Vector3.Distance(cursorPosition, collider.transform.position);
-					shortest = Vector3.Distance(cursorPosition, closest.position);
+				Collider closest = new List<Collider>(nearJoints.Keys).OrderBy(
+					collider => Vector3.Distance(
+						nearJoints[collider].transform.position,
+						collider.transform.position
+					)
+				).First();
 
-					if (distance < shortest && !Mathf.Approximately(distance, shortest))
-						closest = collider.transform;
+				if (closest.transform.parent.gameObject == HighlightedJoint)
+					return;
+
+				if (HighlightedJoint == null) {
+					if (highlightedCursorAnimator != null)
+						highlightedCursorAnimator.SetTrigger("Display");
+					menu.ActivateOption(OPTION.DOWN);
+				} else {
+					Debug.Log("nohighlightedjoint");
+					highlightedJointAnimator.SetTrigger("Normal");
 				}
 
-				if (closest.parent.gameObject != HighlightedJoint) {
-					if (HighlightedJoint != null)
-						highlightedJointAnimator.SetTrigger("Normal");
-					else
-						menu.ActivateOption(OPTION.DOWN);
+				HighlightedJoint = closest.transform.parent.gameObject;
 
-					HighlightedJoint = closest.parent.gameObject;
-					highlightedJointAnimator = closest.GetComponent<Animator>();
-					highlightedJointAnimator.SetTrigger("Highlight");
-				}
-				if (cursorAnimator.isInitialized)
-					cursorAnimator.SetTrigger("Hide");
+				highlightedJointAnimator = closest.gameObject.GetComponent<Animator>();
+				Debug.Log("highlight");
+				highlightedJointAnimator.SetTrigger("Highlight");
+
+				highlightedCursorAnimator = nearJoints[closest].GetComponent<Animator>();
+				highlightedCursorAnimator.SetTrigger("Hide");
+
+				highlightedCursorVisible = false;
 			}},
 			{JOB.ROTATE, () => {
-				if (cursorAnimator.isInitialized)
-					cursorAnimator.SetTrigger("Normal");
-				HighlightedJoint.transform.LookAt(cursor.transform);
+				if (!highlightedCursorVisible) {
+					highlightedCursorAnimator.SetTrigger("Display");
+					highlightedCursorVisible = true;
+				}
+				HighlightedJoint.transform.LookAt(highlightedCursorAnimator.transform);
 			}},
 			{JOB.STANDBY, () => {}}
 		};
 	}
 	void Update() {
-		if (todo != null)
-			manipulators[todo].Invoke();
+		if (currentJob != null)
+			jobs[currentJob].Invoke();
 	}
 
 	public void AssignJob(string job) {
-		todo = job;
+		currentJob = job;
 	}
 	public void Reset() {
 		foreach (GameObject joint in defaultRotations.Keys)

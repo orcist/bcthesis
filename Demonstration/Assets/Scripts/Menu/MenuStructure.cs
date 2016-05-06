@@ -63,7 +63,6 @@ public class MenuStructure : MonoBehaviour {
         manipulator.AssignJob(JOB.ROTATE);
       }},
       {CALLBACK.OPEN_ADDITIONAL, () => {
-        controller.UpdateAdditionalMenuTransform();
         controller.ShowAdditionalMenu(true);
       }},
       {CALLBACK.CLOSE_ADDITIONAL, () => {
@@ -87,7 +86,7 @@ public class MenuStructure : MonoBehaviour {
     startNode = new MenuNode("Start", null, new Dictionary<string, MenuNode>() {
       {OPTION.UP, new MenuNode("Undo the last change.", CALLBACK.UNDO, null)},
       {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", CALLBACK.OPEN_ADDITIONAL, new Dictionary<string, MenuNode>() {
-        {OPTION.MIDDLE, new MenuNode("Touch a button to execute action.", null, null)},
+        {OPTION.MIDDLE, new MenuNode("Gaze at a button to execute action.", null, null)},
         {OPTION.DOWN, new MenuNode("Exit additional actions menu.", CALLBACK.CLOSE_ADDITIONAL, null)}
       })},
       {OPTION.DOWN, new MenuNode("Touch the joint you wish to animate.", null, new Dictionary<string, MenuNode>() {
@@ -115,7 +114,7 @@ public class MenuStructure : MonoBehaviour {
     if (DebugMode) Debug.Log("Entered node: " + currentNode);
 
     if (currentNode.Callback != null)
-      callbacks[currentNode.Callback]();
+      callbacks[currentNode.Callback].Invoke();
     else if (currentNode.ChildNodes == null && DebugMode)
       Debug.LogWarning("Activated node without Callback or child nodes: " + currentNode);
 

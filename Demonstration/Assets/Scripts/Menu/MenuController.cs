@@ -1,64 +1,77 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class MenuController : MonoBehaviour {
-	public GameObject AdditionalMenu;
-	public GameObject Info;
-  public Transform UserHead;
-	public GameObject Slider;
+	public UserController userController;
+	public Animator AdditionalMenuAnimator;
 
-  public Animation playback;
-	public bool newClip = false;
+	public GameObject CrosshairObject;
 
-	private UserController userController;
-	private ManipulationController manipulator;
-	private float maxHeight;
-	private bool playing = false;
+	private Transform cameraTransform;
+	private GameObject lastHit;
+	private Animator crosshairAnimator;
+	private bool crosshairDisplayed = false;
 
 	void Start() {
-		userController = UserHead.parent.gameObject.GetComponent<UserController>();
-		manipulator = GetComponent<ManipulationController>();
+		cameraTransform = userController.Head.GetComponentInChildren<Camera>().transform;
 
-		maxHeight = Slider.transform.parent.GetComponent<RectTransform>().sizeDelta.y;
+		GameObject crosshair = Instantiate(CrosshairObject) as GameObject;
+		crosshair.transform.parent = cameraTransform;
+		crosshair.transform.localPosition = new Vector3(0f, 0f, 0.5f);
+		crosshair.transform.localRotation = Quaternion.identity;
+
+		crosshairAnimator = crosshair.GetComponent<Animator>();
+
+		if (!userController.RightHanded) {
+			transform.Rotate(Vector3.up, 180f);
+			transform.position += new Vector3(0f, 0f, 1f);
+		}
 	}
 	void Update() {
-		adjustSlider();
-		handleClipPlayback();
+		traceSight();
 	}
 
 	public void ShowAdditionalMenu(bool visible) {
-    if (visible) {
-			AdditionalMenu.GetComponent<Animator>().SetTrigger("Display");
-      manipulator.SkeletonContainer.transform.parent.gameObject.SetActive(false);
-    } else {
-			AdditionalMenu.GetComponent<Animator>().SetTrigger("Hide");
-      manipulator.SkeletonContainer.transform.parent.gameObject.SetActive(true);
-    }
+		AdditionalMenuAnimator.SetTrigger(visible ? "Display" : "Hide");
   }
-	public void UpdateAdditionalMenuTransform() {
-		AdditionalMenu.transform.position = new Vector3(UserHead.position.x, 0f, UserHead.position.z) +
-			Quaternion.AngleAxis(UserHead.rotation.eulerAngles.y, Vector3.up) * Vector3.forward * 0.75f;
-		AdditionalMenu.transform.rotation = Quaternion.AngleAxis(UserHead.rotation.eulerAngles.y, Vector3.up);
-	}
-	public void DisplayInfo(string info) {
-		Info.GetComponentInChildren<UnityEngine.UI.Text>().text = info;
-		Info.GetComponent<Animator>().SetTrigger("Ping");
-	}
 
-	private void adjustSlider() {
-		float newHeight = userController.GetRecessiveHandAngle() * maxHeight;
-		RectTransform sliderTransform = Slider.GetComponent<RectTransform>();
-		sliderTransform.sizeDelta = new Vector2(sliderTransform.sizeDelta.x, newHeight);
-	}
-	private void handleClipPlayback() {
-		if (newClip) {
-			manipulator.AssignJob(JOB.STANDBY);
-			ShowAdditionalMenu(false);
-			newClip = false;
-			playing = true;
-		} else if (playing && !playback.isPlaying) {
-			manipulator.AssignJob(JOB.TRACK);
-			ShowAdditionalMenu(true);
-			playing = false;
+	private void traceSight() {
+		RaycastHit hit;
+		bool success = Physics.Raycast(
+			cameraTransform.position,
+			cameraTransform.forward,
+			out hit,
+			20f,
+			1 << LayerMask.NameToLayer("UI"),
+			QueryTriggerInteraction.Collide
+		);
+
+		if (lastHit != null && (!success || lastHit != hit.transform.parent.gameObject)) {
+			ExecuteEvents.Execute(
+				lastHit,
+				new PointerEventData(EventSystem.current),
+				ExecuteEvents.pointerExitHandler
+			);
 		}
+
+		if (success) {
+			if (!crosshairDisplayed) {
+				crosshairAnimator.SetTrigger("Display");
+				crosshairDisplayed = true;
+			}
+
+			ExecuteEvents.Execute(
+				hit.transform.parent.gameObject,
+				new PointerEventData(EventSystem.current),
+				ExecuteEvents.pointerEnterHandler
+			);
+		} else {
+			if (crosshairDisplayed) {
+				crosshairAnimator.SetTrigger("Hide");
+				crosshairDisplayed = false;
+			}
+		}
+
+		lastHit = success ? hit.transform.parent.gameObject : null;
 	}
 }
