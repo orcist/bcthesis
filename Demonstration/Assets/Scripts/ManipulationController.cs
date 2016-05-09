@@ -1,6 +1,14 @@
 ﻿using UnityEngine;
 using System;
+using System.Linq;
 using System.Collections.Generic;
+
+// Define symbols for code readability
+public static class JOB {
+	public static readonly string TRACK = "JOB.TRACK";
+	public static readonly string ROTATE = "JOB.ROTATE";
+	public static readonly string STANDBY = "JOB.STANDBY";
+}
 
 public class ManipulationController : MonoBehaviour {
 	public GameObject SkeletonContainer;
@@ -9,82 +17,111 @@ public class ManipulationController : MonoBehaviour {
 
 	public GameObject HighlightedJoint;
 
-	private MenuStructure menu;
-	private GameObject cursor;
-	private Animator cursorAnimator;
-	private Dictionary<string, Action> manipulators;
-	private string jobLabel;
-	private List<GameObject> markers;
-
+	private Dictionary<GameObject, Quaternion> defaultRotations;
+	private Dictionary<string, Action> jobs;
+	private string currentJob;
+	private List<GameObject> cursors;
 	private Animator highlightedJointAnimator;
+	private Animator highlightedCursorAnimator;
+	private bool highlightedCursorVisible = false;
+	private MenuStructure menu;
 
 	void Start () {
-		markers = new List<GameObject>();
-		attachMarkersRecursively(SkeletonContainer.transform.GetChild(0), 1);
-
 		menu = GetComponent<MenuStructure>();
 
-		cursor = GameObject.FindGameObjectWithTag("User cursor");
-		cursorAnimator = cursor.GetComponent<Animator>();
+		cursors = new List<GameObject>(GameObject.FindGameObjectsWithTag("User cursor"));
 
-		manipulators = new Dictionary<string, Action>() {
-			{"track cursor-model collisions", () => {
-				Vector3 cursorPosition = cursor.transform.position;
-				Collider[] colliders = Physics.OverlapSphere(
-					cursorPosition,
-					cursor.transform.lossyScale.x/2,
-					1 << LayerMask.NameToLayer("Joint marker")
-				);
+		Transform root = SkeletonContainer.transform.GetChild(0);
+		defaultRotations = new Dictionary<GameObject, Quaternion>();
+		memorizeTransforms(root);
+		attachMarkersRecursively(root, 1);
 
-				if (colliders.Length == 0) {
-					cursorAnimator.SetTrigger("Normal");
+		jobs = new Dictionary<string, Action>() {
+			{JOB.TRACK, () => {
+				foreach (GameObject a in cursors)
+					if (!a.activeSelf) {
+						return;
+					}
 
+				Dictionary<Collider, GameObject> nearJoints = new Dictionary<Collider, GameObject>();
+				foreach (GameObject c in cursors) {
+					Collider[] collidingJoints = Physics.OverlapSphere(
+						c.transform.position,
+						c.transform.lossyScale.x/2,
+						1 << LayerMask.NameToLayer("Joint marker")
+					);
+					for (uint i = 0; i < collidingJoints.Length; i++)
+						nearJoints.Add(collidingJoints[i], c);
+				}
+
+				if (nearJoints.Keys.Count == 0) {
 					if (HighlightedJoint != null) {
+						highlightedCursorAnimator.SetTrigger("Display");
 						highlightedJointAnimator.SetTrigger("Normal");
+
 						HighlightedJoint = null;
+
 						menu.Reset();
 					}
 					return;
 				}
 
-				Transform closest = colliders[0].transform;
-				float distance, shortest;
-				foreach (Collider collider in colliders) {
-					distance = Vector3.Distance(cursorPosition, collider.transform.position);
-					shortest = Vector3.Distance(cursorPosition, closest.position);
+				Collider closest = new List<Collider>(nearJoints.Keys).OrderBy(
+					collider => Vector3.Distance(
+						nearJoints[collider].transform.position,
+						collider.transform.position
+					)
+				).First();
 
-					if (distance < shortest && !Mathf.Approximately(distance, shortest))
-						closest = collider.transform;
+				if (closest.transform.parent.gameObject == HighlightedJoint)
+					return;
+
+				if (HighlightedJoint == null) {
+					if (highlightedCursorAnimator != null)
+						highlightedCursorAnimator.SetTrigger("Display");
+					menu.ActivateOption(OPTION.DOWN);
+				} else {
+					highlightedJointAnimator.SetTrigger("Normal");
 				}
 
-				if (closest.parent.gameObject != HighlightedJoint) {
-					if (HighlightedJoint != null)
-						highlightedJointAnimator.SetTrigger("Normal");
-					else
-						menu.ActivateOption(OPTION.DOWN);
+				HighlightedJoint = closest.transform.parent.gameObject;
 
-					HighlightedJoint = closest.parent.gameObject;
-					highlightedJointAnimator = closest.GetComponent<Animator>();
-					highlightedJointAnimator.SetTrigger("Highlight");
+				highlightedJointAnimator = closest.gameObject.GetComponent<Animator>();
+				highlightedJointAnimator.SetTrigger("Highlight");
+
+				highlightedCursorAnimator = nearJoints[closest].GetComponent<Animator>();
+				highlightedCursorAnimator.SetTrigger("Hide");
+
+				highlightedCursorVisible = false;
+			}},
+			{JOB.ROTATE, () => {
+				if (!highlightedCursorVisible) {
+					highlightedCursorAnimator.SetTrigger("Display");
+					highlightedCursorVisible = true;
 				}
-				cursorAnimator.SetTrigger("Hide");
+				HighlightedJoint.transform.LookAt(highlightedCursorAnimator.transform);
 			}},
-			{"rotate highlighted joint", () => {
-				cursorAnimator.SetTrigger("Normal");
-				HighlightedJoint.transform.LookAt(cursor.transform);
-			}},
-			{"standby", () => {}}
+			{JOB.STANDBY, () => {}}
 		};
 	}
 	void Update() {
-		if (jobLabel.Length > 0)
-			manipulators[jobLabel].Invoke();
+		if (currentJob != null)
+			jobs[currentJob].Invoke();
 	}
 
-	public void assignJob(string job) {
-		jobLabel = job;
+	public void AssignJob(string job) {
+		currentJob = job;
+	}
+	public void Reset() {
+		foreach (GameObject joint in defaultRotations.Keys)
+			joint.transform.rotation = defaultRotations[joint];
 	}
 
+	private void memorizeTransforms(Transform joint) {
+		defaultRotations[joint.gameObject] = joint.rotation;
+		for (int i = 0; i < joint.transform.childCount; i++)
+			memorizeTransforms(joint.transform.GetChild(i));
+	}
 	private void attachMarkersRecursively(Transform joint, uint depth) {
 		for (int i = 0; i < joint.transform.childCount; i++)
 			attachMarkersRecursively(joint.transform.GetChild(i), depth+1);
@@ -93,7 +130,5 @@ public class ManipulationController : MonoBehaviour {
 		marker.transform.parent = joint.transform;
 		marker.transform.localPosition = Vector3.zero;
 		marker.transform.localScale *= Mathf.Pow(MarkerScaleFactor, depth);
-
-		markers.Add(marker);
 	}
 }

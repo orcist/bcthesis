@@ -4,27 +4,37 @@ using System;
 using System.Collections.Generic;
 
 // Define symbols for code readability
-public class OPTION {
+public static class OPTION {
   public static readonly string UP = "OPTION.UP";
   public static readonly string MIDDLE = "OPTION.MIDDLE";
   public static readonly string DOWN = "OPTION.DOWN";
 }
 
+public static class CALLBACK {
+  public static readonly string STANDBY = "CALLBACK.STANDBY";
+  public static readonly string ROTATE_JOINT = "CALLBACK.ROTATE_JOINT";
+  public static readonly string OPEN_ADDITIONAL = "CALLBACK.OPEN_ADDITIONAL";
+  public static readonly string CLOSE_ADDITIONAL = "CALLBACK.CLOSE_ADDITIONAL";
+  public static readonly string DISCARD_CHANGES = "CALLBACK.DISCARD_CHANGES";
+  public static readonly string SAVE_CHANGES = "CALLBACK.SAVE_CHANGES";
+  public static readonly string UNDO = "CALLBACK.UNDO";
+}
+
 public class MenuNode {
   public readonly string NodeLabel;
   public readonly Dictionary<string, MenuNode> ChildNodes;
-  public readonly Action Trigger;
+  public readonly string Callback;
 
-  public MenuNode(string nodeLabel, Action trigger, Dictionary<string, MenuNode> childNodes) {
+  public MenuNode(string nodeLabel, string callback, Dictionary<string, MenuNode> childNodes) {
     NodeLabel = nodeLabel;
-    Trigger = trigger;
+    Callback = callback;
     ChildNodes = childNodes;
   }
   public override string ToString() {
     return String.Format(
-      "MenuNode(NodeLabel: \"{0}\", NodeType: {1}, Child count: {2})",
-      NodeLabel.Substring(0, Math.Min(NodeLabel.Length, 25)),
-      (Trigger == null) ? "NODE.LABEL" : "NODE.BUTTON",
+      "MenuNode(NodeLabel: \"{0}\", Callback: {1}, Child count: {2})",
+      NodeLabel.Substring(0, Math.Min(NodeLabel.Length, 15)),
+      (Callback == null ? "NONE (label)" : Callback),
       (ChildNodes == null ? 0 : ChildNodes.Keys.Count)
     );
   }
@@ -32,60 +42,66 @@ public class MenuNode {
 
 public class MenuStructure : MonoBehaviour {
   public Button[] OptionButtons;
-  public GameObject AdditionalActions;
-  public Transform UserHead;
   public bool DebugMode = false;
 
   private MenuNode startNode, currentNode, emptyNode = new MenuNode("", null, null);
   private Dictionary<string, Action> callbacks;
+  private MenuController controller;
   private ManipulationController manipulator;
+  private ClipManager clipManager;
 
   void Start() {
+    controller = GetComponent<MenuController>();
     manipulator = GetComponent<ManipulationController>();
+    clipManager = GetComponent<ClipManager>();
 
     callbacks = new Dictionary<string, Action>() {
-      {"empty", () => {}},
-      {"reset", () => Reset()},
-      {"rotate joint", () => {
-        manipulator.assignJob("rotate highlighted joint");
+      {CALLBACK.STANDBY, () => {
+        manipulator.AssignJob(JOB.STANDBY);
       }},
-      {"open additional", () => {
-        manipulator.assignJob("standby");
-
-        AdditionalActions.transform.position = new Vector3(UserHead.position.x, 0f, UserHead.position.z) +
-          (Quaternion.AngleAxis(UserHead.rotation.eulerAngles.y, Vector3.up) * Vector3.forward);
-        AdditionalActions.transform.rotation = Quaternion.AngleAxis(UserHead.rotation.eulerAngles.y, Vector3.up);
-
-        AdditionalActions.GetComponent<Animator>().SetTrigger("Display");
+      {CALLBACK.ROTATE_JOINT, () => {
+        manipulator.AssignJob(JOB.ROTATE);
       }},
-      {"close additional", () => {
-        AdditionalActions.GetComponent<Animator>().SetTrigger("Hide");
+      {CALLBACK.OPEN_ADDITIONAL, () => {
+        controller.ShowAdditionalMenu(true);
+      }},
+      {CALLBACK.CLOSE_ADDITIONAL, () => {
+        controller.ShowAdditionalMenu(false);
         Reset();
       }},
-      {"n/a", () => { Debug.Log("This functionality is not yet implemented."); }},
+      {CALLBACK.DISCARD_CHANGES, () => {
+        clipManager.Undo(0);
+        Reset();
+      }},
+      {CALLBACK.SAVE_CHANGES, () => {
+        clipManager.SaveRotation(manipulator.HighlightedJoint);
+        Reset();
+      }},
+      {CALLBACK.UNDO, () => {
+        clipManager.Undo(1);
+        Reset();
+      }},
     };
 
-    startNode = new MenuNode(
-      "Start", null, new Dictionary<string, MenuNode>() {
-        {OPTION.UP, new MenuNode("Undo the last change.", callbacks["n/a"], null)},
-        {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", callbacks["open additional"], new Dictionary<string, MenuNode>() {
-          {OPTION.MIDDLE, new MenuNode("Touch a button to execute action.", null, null)},
-          {OPTION.DOWN, new MenuNode("Exit additional actions menu.", callbacks["close additional"], null)}
-        })},
-        {OPTION.DOWN, new MenuNode("Touch the characters joint to start animating.", null, new Dictionary<string, MenuNode>() {
-          {OPTION.UP, new MenuNode("Do you want to work with this joint?.", null, null)},
-          {OPTION.MIDDLE, new MenuNode("Rotate selected joint.", callbacks["rotate joint"], new Dictionary<string, MenuNode>() {
-            {OPTION.UP, new MenuNode("Discard changes.", callbacks["n/a"], new Dictionary<string, MenuNode>() {
-              {OPTION.UP, new MenuNode("Are you sure about that?", null, null)},
-              {OPTION.MIDDLE, new MenuNode("Yes, discard the changes.", callbacks["reset"], null)},
-              {OPTION.DOWN, new MenuNode("I changed my mind, save the changes.", callbacks["n/a"], null)}
-            })},
-            {OPTION.MIDDLE, new MenuNode("Adjust joint rotation to your liking.", null, null)},
-            {OPTION.DOWN, new MenuNode("Save changes.", callbacks["n/a"], null)}
-          })}
-        })
-      }}
-    );
+    startNode = new MenuNode("Start", null, new Dictionary<string, MenuNode>() {
+      {OPTION.UP, new MenuNode("Undo the last change.", CALLBACK.UNDO, null)},
+      {OPTION.MIDDLE, new MenuNode("Open additional actions menu.", CALLBACK.OPEN_ADDITIONAL, new Dictionary<string, MenuNode>() {
+        {OPTION.MIDDLE, new MenuNode("Gaze at a button to execute action.", null, null)},
+        {OPTION.DOWN, new MenuNode("Exit additional actions menu.", CALLBACK.CLOSE_ADDITIONAL, null)}
+      })},
+      {OPTION.DOWN, new MenuNode("Touch the joint you wish to animate.", null, new Dictionary<string, MenuNode>() {
+        {OPTION.UP, new MenuNode("Do you want to work with this joint?.", null, null)},
+        {OPTION.MIDDLE, new MenuNode("Rotate selected joint.", CALLBACK.ROTATE_JOINT, new Dictionary<string, MenuNode>() {
+          {OPTION.UP, new MenuNode("Discard changes.", CALLBACK.STANDBY, new Dictionary<string, MenuNode>() {
+            {OPTION.UP, new MenuNode("Are you sure about that?", null, null)},
+            {OPTION.MIDDLE, new MenuNode("Yes, discard the changes.", CALLBACK.DISCARD_CHANGES, null)},
+            {OPTION.DOWN, new MenuNode("I changed my mind, save the changes.", CALLBACK.SAVE_CHANGES, null)}
+          })},
+          {OPTION.MIDDLE, new MenuNode("Adjust joint rotation to your liking.", null, null)},
+          {OPTION.DOWN, new MenuNode("Save changes.", CALLBACK.SAVE_CHANGES, null)}
+        })}
+      })}
+    });
 
     Reset();
   }
@@ -97,26 +113,26 @@ public class MenuStructure : MonoBehaviour {
     currentNode = currentNode.ChildNodes[option];
     if (DebugMode) Debug.Log("Entered node: " + currentNode);
 
-    if (currentNode.Trigger != null)
-      currentNode.Trigger();
+    if (currentNode.Callback != null)
+      callbacks[currentNode.Callback].Invoke();
     else if (currentNode.ChildNodes == null && DebugMode)
-      Debug.LogWarning("Activated node without trigger or child nodes: " + currentNode);
+      Debug.LogWarning("Activated node without Callback or child nodes: " + currentNode);
 
     rebuildMenu(currentNode.ChildNodes);
   }
   public void Reset() {
     currentNode = startNode;
     if (DebugMode) Debug.Log("Menu reset, now at startNode.");
-    manipulator.assignJob("track cursor-model collisions");
+    manipulator.AssignJob(JOB.TRACK);
     rebuildMenu(currentNode.ChildNodes);
   }
 
   private void rebuildMenu(Dictionary<string, MenuNode> newNodes) {
     foreach (Button option in OptionButtons)
-      buildOption(option, !newNodes.ContainsKey(option.name) ? emptyNode : newNodes[option.name]);
+      setOption(option, newNodes.ContainsKey(option.name) ? newNodes[option.name] : emptyNode);
   }
-  private void buildOption(Button button, MenuNode node) {
+  private void setOption(Button button, MenuNode node) {
     button.GetComponentInChildren<Text>().text = node.NodeLabel;
-    button.interactable = (node.Trigger != null);
+    button.interactable = (node.Callback != null);
   }
 }
