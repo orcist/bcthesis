@@ -27,6 +27,7 @@ public class UserController : MonoBehaviour {
 	private Dictionary<string, GameObject> Tracked;
 	private Dictionary<string, string> jointParents;
   private bool allTrackedVisible = false;
+  private bool linesHidden = false;
 
   private Vector3[] bindingTrapezoid;
   /* (-+),(++)
@@ -146,8 +147,17 @@ public class UserController : MonoBehaviour {
     if (!Calibrated)
       calibrateSpace();
 
-		if (DrawSkeleton)
+		if (DrawSkeleton) {
 			drawSkeleton();
+      linesHidden = false;
+    } else {
+      if (!linesHidden) {
+        foreach (string joint in Tracked.Keys)
+          if (Tracked[joint] != Head)
+            lines[joint].gameObject.SetActive(false);
+        linesHidden = true;
+      }
+    }
 	}
 
 	private void resetUser() {

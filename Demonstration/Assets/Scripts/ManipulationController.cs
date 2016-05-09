@@ -56,7 +56,6 @@ public class ManipulationController : MonoBehaviour {
 
 				if (nearJoints.Keys.Count == 0) {
 					if (HighlightedJoint != null) {
-						Debug.Log("keycount");
 						highlightedCursorAnimator.SetTrigger("Display");
 						highlightedJointAnimator.SetTrigger("Normal");
 
@@ -82,14 +81,12 @@ public class ManipulationController : MonoBehaviour {
 						highlightedCursorAnimator.SetTrigger("Display");
 					menu.ActivateOption(OPTION.DOWN);
 				} else {
-					Debug.Log("nohighlightedjoint");
 					highlightedJointAnimator.SetTrigger("Normal");
 				}
 
 				HighlightedJoint = closest.transform.parent.gameObject;
 
 				highlightedJointAnimator = closest.gameObject.GetComponent<Animator>();
-				Debug.Log("highlight");
 				highlightedJointAnimator.SetTrigger("Highlight");
 
 				highlightedCursorAnimator = nearJoints[closest].GetComponent<Animator>();

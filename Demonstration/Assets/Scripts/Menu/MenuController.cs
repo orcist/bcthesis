@@ -22,10 +22,8 @@ public class MenuController : MonoBehaviour {
 
 		crosshairAnimator = crosshair.GetComponent<Animator>();
 
-		if (!userController.RightHanded) {
-			transform.Rotate(Vector3.up, 180f);
-			transform.position += new Vector3(0f, 0f, 1f);
-		}
+		if (!userController.RightHanded)
+			transform.Rotate(Vector3.up, 90f);
 	}
 	void Update() {
 		traceSight();
