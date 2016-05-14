@@ -4,6 +4,7 @@ using UnityEngine.EventSystems;
 public class MenuController : MonoBehaviour {
 	public UserController userController;
 	public Animator AdditionalMenuAnimator;
+	public GameObject Info;
 
 	public GameObject CrosshairObject;
 
@@ -32,6 +33,11 @@ public class MenuController : MonoBehaviour {
 	public void ShowAdditionalMenu(bool visible) {
 		AdditionalMenuAnimator.SetTrigger(visible ? "Display" : "Hide");
   }
+
+	public void ShowMessage(string message) {
+		Info.GetComponentInChildren<UnityEngine.UI.Text>().text = message;
+		Info.GetComponent<Animator>().SetTrigger("Ping");
+	}
 
 	private void traceSight() {
 		RaycastHit hit;
