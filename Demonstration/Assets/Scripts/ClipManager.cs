@@ -5,7 +5,6 @@ using System.Linq;
 using System.Collections.Generic;
 
 public class ClipManager : MonoBehaviour {
-	public AnimationClip clip;
 	private GameObject model, root;
 	private Animation playback;
 	private List<AnimationClip> cache;
