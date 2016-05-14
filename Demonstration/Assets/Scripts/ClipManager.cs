@@ -100,6 +100,8 @@ public class ClipManager : MonoBehaviour {
 		clip.legacy = true;
 
 		playback.AddClip(clip, clip.name);
+
+		manipulator.Reset();
 		playback.Play(clip.name);
 	}
 	public void CreateKeyframe() {
