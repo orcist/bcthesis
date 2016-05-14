@@ -100,6 +100,7 @@ public class ManipulationController : MonoBehaviour {
 					highlightedCursorVisible = true;
 				}
 				HighlightedJoint.transform.LookAt(highlightedCursorAnimator.transform);
+				HighlightedJoint.transform.rotation *= Quaternion.Inverse(defaultRotations[HighlightedJoint]);
 			}},
 			{JOB.STANDBY, () => {}}
 		};
