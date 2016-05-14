@@ -115,7 +115,10 @@ public class ManipulationController : MonoBehaviour {
 	}
 	public void Reset() {
 		foreach (GameObject joint in defaultRotations.Keys)
-			joint.transform.rotation = defaultRotations[joint];
+			ResetJoint(joint);
+	}
+	public void ResetJoint(GameObject joint) {
+		joint.transform.rotation = defaultRotations[joint];
 	}
 
 	private void memorizeTransforms(Transform joint) {

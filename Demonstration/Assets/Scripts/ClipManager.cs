@@ -5,8 +5,9 @@ using System.Linq;
 using System.Collections.Generic;
 
 public class ClipManager : MonoBehaviour {
+	public AnimationClip clip;
 	private GameObject model, root;
-	public Animation playback; // @todo change to private
+	private Animation playback;
 	private List<AnimationClip> cache;
 	private Dictionary<AnimationClip, Dictionary<GameObject, AnimationCurve[]>> curves;
 
@@ -38,38 +39,25 @@ public class ClipManager : MonoBehaviour {
 				for (uint i = 0; i < pastCurves[j].Length; i++)
 					curves[clip][j][i] = new AnimationCurve(pastCurves[j][i].keys);
 			}
-		} else {
+		} else
 			curves[clip] = new Dictionary<GameObject, AnimationCurve[]>();
-		}
 
 		if (!curves[clip].ContainsKey(joint)) {
 			curves[clip][joint] = new AnimationCurve[3];
 			for (uint i = 0; i < 3; i++)
 				curves[clip][joint][i] = new AnimationCurve();
+
+			Quaternion rotation = joint.transform.rotation;
+			manipulator.ResetJoint(joint);
+			setRotationCurves(clip, joint, (float)(currentKeyframe-1)/2);
+			joint.transform.rotation = rotation;
 		}
 
-		Vector3 newRotation = joint.transform.localEulerAngles;
-		AnimationCurve[] cs = curves[clip][joint];
-		float time = currentKeyframe/clip.frameRate;
-
-		cs[0].AddKey(time, newRotation.x);
-		cs[0].SmoothTangents(cs[0].keys.Length-1, 0);
-
-		cs[1].AddKey(time, newRotation.y);
-		cs[1].SmoothTangents(cs[1].keys.Length-1, 0);
-
-		cs[2].AddKey(time, newRotation.z);
-		cs[2].SmoothTangents(cs[2].keys.Length-1, 0);
-
-		string path = getRootPath(joint);
-		clip.SetCurve(path, typeof(Transform), "localEuler.x", cs[0]);
-		clip.SetCurve(path, typeof(Transform), "localEuler.y", cs[1]);
-		clip.SetCurve(path, typeof(Transform), "localEuler.z", cs[2]);
-
+		setRotationCurves(clip, joint, (float)currentKeyframe/2);
 		saveCache();
 	}
 	public void ExportClip() {
-		string animationID = System.DateTime.Now.ToString("yyyy-MM-HH-mm-ss");
+		string animationID = System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
 		AssetDatabase.MoveAsset(
 			"Assets/Animations/cache.temp/cache_"+(cache.Count-1)+".anim",
 			"Assets/Animations/animation_"+animationID+".anim");
@@ -138,5 +126,23 @@ public class ClipManager : MonoBehaviour {
 		string cachePath = "Assets/Animations/cache.temp/cache_"+i+".anim";
 		AssetDatabase.CreateAsset(cache[i], cachePath);
 		AssetDatabase.SaveAssets();
+	}
+	private void setRotationCurves(AnimationClip clip, GameObject joint, float time) {
+		Vector3 rotation = joint.transform.localEulerAngles;
+		AnimationCurve[] cs = curves[clip][joint];
+
+		cs[0].AddKey(time, rotation.x);
+		cs[0].SmoothTangents(cs[0].keys.Length-1, 0);
+
+		cs[1].AddKey(time, rotation.y);
+		cs[1].SmoothTangents(cs[1].keys.Length-1, 0);
+
+		cs[2].AddKey(time, rotation.z);
+		cs[2].SmoothTangents(cs[2].keys.Length-1, 0);
+
+		string path = getRootPath(joint);
+		clip.SetCurve(path, typeof(Transform), "localEuler.x", cs[0]);
+		clip.SetCurve(path, typeof(Transform), "localEuler.y", cs[1]);
+		clip.SetCurve(path, typeof(Transform), "localEuler.z", cs[2]);
 	}
 }
